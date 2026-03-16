@@ -197,9 +197,9 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
 <div class="header">
   <h1>Product Tracker</h1>
   <nav class="nav">
-    <a class="active" onclick="show('results',this)">Results</a>
-    <a onclick="show('watchlist',this)">Watchlist</a>
-    <a onclick="show('settings',this)">Settings</a>
+    <a class="active" id="nav-results" onclick="show('results',this)">Results</a>
+    <a id="nav-watchlist" onclick="show('watchlist',this)">Watchlist</a>
+    <a id="nav-settings" onclick="show('settings',this)">Settings</a>
   </nav>
 </div>
 
@@ -323,14 +323,24 @@ const SB_KEY = "{supabase_key}";
 const GH_REPO = "{github_repo}";
 const GH_WORKFLOW = "{github_workflow}";
 
-const sb = window.supabase.createClient(SB_URL, SB_KEY);
+let sb;
+function getSB() {{
+  if (!sb) {{
+    if (!window.supabase) {{ toast('Supabase not loaded yet — try again'); return null; }}
+    sb = window.supabase.createClient(SB_URL, SB_KEY);
+  }}
+  return sb;
+}}
 
 // --- Tab navigation ---
 function show(page, el) {{
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
   if (el) el.classList.add('active');
+  if (page === 'settings') loadSettings();
+  if (page === 'watchlist') loadWatchlist();
 }}
 
 // --- Toast ---
@@ -346,7 +356,7 @@ async function runNow(btn) {{
   btn.disabled = true;
   btn.innerHTML = '<span class="run-status running">Triggering...</span>';
   try {{
-    const {{ data }} = await sb.from('settings').select('value').eq('key', 'github_pat').single();
+    const {{ data }} = await getSB().from('settings').select('value').eq('key', 'github_pat').single();
     const pat = data && data.value;
     if (!pat) {{
       toast('Set your GitHub PAT in Settings first');
@@ -384,7 +394,7 @@ async function runNow(btn) {{
 
 // --- Settings ---
 async function loadSettings() {{
-  const {{ data }} = await sb.from('settings').select('key, value');
+  const {{ data }} = await getSB().from('settings').select('key, value');
   const s = {{}};
   (data || []).forEach(r => s[r.key] = r.value);
   document.getElementById('s-keywords').value = s.search_keywords || '';
@@ -402,14 +412,14 @@ async function saveSettings(e) {{
     ['github_pat', document.getElementById('s-github-pat').value],
   ];
   for (const [key, value] of pairs) {{
-    await sb.from('settings').upsert({{ key, value }}, {{ onConflict: 'key' }});
+    await getSB().from('settings').upsert({{ key, value }}, {{ onConflict: 'key' }});
   }}
   toast('Settings saved');
 }}
 
 // --- Watchlist ---
 async function loadWatchlist() {{
-  const {{ data, error }} = await sb.from('watchlist').select('*').order('created_at', {{ ascending: true }});
+  const {{ data, error }} = await getSB().from('watchlist').select('*').order('created_at', {{ ascending: true }});
   renderWatchlist(data || []);
 }}
 
@@ -441,7 +451,7 @@ async function addWatchlistItem() {{
   const maxPrice = document.getElementById('wl-maxprice').value;
   if (!name || !keywords) {{ toast('Name and keywords are required'); return; }}
   const row = {{ name, keywords, max_price: maxPrice || null, is_active: true }};
-  const {{ error }} = await sb.from('watchlist').insert(row);
+  const {{ error }} = await getSB().from('watchlist').insert(row);
   if (error) {{ toast('Error: ' + error.message); return; }}
   document.getElementById('wl-name').value = '';
   document.getElementById('wl-keywords').value = '';
@@ -452,13 +462,13 @@ async function addWatchlistItem() {{
 
 async function deleteWatchlist(id) {{
   if (!confirm('Delete this watchlist item?')) return;
-  await sb.from('watchlist').delete().eq('id', id);
+  await getSB().from('watchlist').delete().eq('id', id);
   toast('Deleted');
   loadWatchlist();
 }}
 
 async function toggleWatchlist(id, currentlyActive) {{
-  await sb.from('watchlist').update({{ is_active: !currentlyActive }}).eq('id', id);
+  await getSB().from('watchlist').update({{ is_active: !currentlyActive }}).eq('id', id);
   loadWatchlist();
 }}
 
