@@ -231,9 +231,9 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
     <a id="nav-watchlist" data-page="watchlist">Watchlist</a>
     <a id="nav-sources" data-page="sources">Sources</a>
     <a id="nav-settings" data-page="settings">Settings</a>
+    <a href="roadmap.html" target="_blank" style="color:#888">Roadmap &#8599;</a>
   </nav>
   <div class="header-right">
-    <a href="roadmap.html" target="_blank" style="font-size:13px;color:#888;text-decoration:none">Roadmap</a>
     <span id="run-status-indicator" style="font-size:12px;color:#888"></span>
     <button class="btn btn-green" id="header-run-btn">
       <span>&#9654;</span> Run search now
