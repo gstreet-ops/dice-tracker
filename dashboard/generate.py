@@ -85,6 +85,31 @@ def _fetch_watchlist(sb):
         return []
 
 
+def _relative_time(iso_str: str) -> str:
+    """Convert ISO timestamp to human-readable relative time."""
+    if not iso_str:
+        return "\u2014"
+    try:
+        from datetime import timezone
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        now = datetime.now(timezone.utc)
+        diff = now - dt
+        mins = int(diff.total_seconds() / 60)
+        if mins < 1:
+            return "just now"
+        if mins < 60:
+            return f"{mins}m ago"
+        hours = mins // 60
+        if hours < 24:
+            return f"{hours}h ago"
+        days = hours // 24
+        if days == 1:
+            return "yesterday"
+        return f"{days}d ago"
+    except Exception:
+        return "\u2014"
+
+
 def _render(products, stats, watchlist):
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
     last_run = stats.get("ran_at", "unknown")[:16].replace("T", " ") if stats.get("ran_at") else "unknown"
@@ -103,6 +128,8 @@ def _render(products, stats, watchlist):
         )
         size = f"{p['size_mm']}mm" if p.get("size_mm") else "\u2014"
         category = p.get("watchlist_category") or "Dice"
+        last_seen_raw = p.get("last_seen") or ""
+        found_label = _relative_time(last_seen_raw)
         rows += f"""
         <tr>
           <td style="padding:10px 8px;border-bottom:1px solid #eee">
@@ -120,6 +147,7 @@ def _render(products, stats, watchlist):
           <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center">
             <span style="color:{score_color};font-weight:600">{score}</span>
           </td>
+          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">{found_label}</td>
         </tr>"""
 
     # Pre-render watchlist items for the static HTML
@@ -205,6 +233,7 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
     <a id="nav-settings" data-page="settings">Settings</a>
   </nav>
   <div class="header-right">
+    <a href="roadmap.html" target="_blank" style="font-size:13px;color:#888;text-decoration:none">Roadmap</a>
     <span id="run-status-indicator" style="font-size:12px;color:#888"></span>
     <button class="btn btn-green" id="header-run-btn">
       <span>&#9654;</span> Run search now
@@ -231,6 +260,7 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
         <th style="text-align:right">Price</th>
         <th style="text-align:center">Stock</th>
         <th style="text-align:center">Score</th>
+        <th style="text-align:center">Found</th>
       </tr></thead>
       <tbody>{rows}</tbody>
     </table>
@@ -847,6 +877,9 @@ document.getElementById('advanced-toggle').addEventListener('click', function() 
   var sec = document.getElementById('advanced-section');
   sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
 }});
+// Cache Supabase config for roadmap page
+localStorage.setItem("sb_url", SB_URL);
+localStorage.setItem("sb_key", SB_KEY);
 loadSettings();
 loadWatchlist();
 updateRunStatus();
