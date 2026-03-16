@@ -12,13 +12,15 @@ logger = logging.getLogger("alerts.email")
 
 
 def send_alert(new_count: int, drop_count: int, top_products: list[dict]):
-    gmail = os.environ.get("GMAIL_ADDRESS", "")
-    app_pw = os.environ.get("GMAIL_APP_PASSWORD", "")
-    to_email = os.environ.get("ALERT_TO_EMAIL", gmail)
+    # Try Supabase settings first, fall back to env vars
+    gmail, app_pw, to_email = _get_email_config()
 
     if not gmail or not app_pw:
         logger.warning("Gmail credentials not set — skipping alert")
         return
+
+    if not to_email:
+        to_email = gmail
 
     subject = _build_subject(new_count, drop_count)
     html = _build_html(new_count, drop_count, top_products)
@@ -36,6 +38,29 @@ def send_alert(new_count: int, drop_count: int, top_products: list[dict]):
         logger.info(f"Alert sent to {to_email}: {subject}")
     except Exception as e:
         logger.error(f"Failed to send alert: {e}")
+
+
+def _get_email_config():
+    """Read email config from Supabase settings, fall back to env vars."""
+    try:
+        import sys
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from settings import get_settings
+        from scrapers.base import get_supabase
+        sb = get_supabase()
+        s = get_settings(sb)
+        gmail = s.get("alert_from_email", "").strip()
+        app_pw = s.get("alert_gmail_password", "").strip()
+        to_email = s.get("alert_to_email", "").strip()
+        if gmail and app_pw:
+            return gmail, app_pw, to_email
+    except Exception as e:
+        logger.debug(f"Could not read email settings from Supabase: {e}")
+    # Fall back to env vars
+    gmail = os.environ.get("GMAIL_ADDRESS", "")
+    app_pw = os.environ.get("GMAIL_APP_PASSWORD", "")
+    to_email = os.environ.get("ALERT_TO_EMAIL", "")
+    return gmail, app_pw, to_email
 
 
 def _build_subject(new_count: int, drop_count: int) -> str:
