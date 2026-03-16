@@ -12,6 +12,7 @@ from scrapers import (
     AliExpressScraper,
     GoogleShoppingScraper,
     TheDiceShopScraper,
+    UrlWatcherScraper,
 )
 from alerts.email import send_alert
 from dashboard.generate import generate_dashboard
@@ -33,6 +34,21 @@ def _fetch_watchlist_items(sb):
         return result.data or []
     except Exception as e:
         logger.warning(f"Could not fetch watchlist: {e}")
+        return []
+
+
+def _fetch_url_sources(sb):
+    """Fetch active URL sources from Supabase."""
+    try:
+        result = (
+            sb.table("url_sources")
+            .select("id, label, url, is_active")
+            .eq("is_active", True)
+            .execute()
+        )
+        return result.data or []
+    except Exception as e:
+        logger.warning(f"Could not fetch url_sources: {e}")
         return []
 
 
@@ -88,6 +104,22 @@ def run_all():
                     alert_items.append(result)
             except Exception as e:
                 logger.warning(f"Watchlist scraper failed for {category_name}/{scraper_cls.source}: {e}")
+
+    # --- URL source watches ---
+    url_sources = _fetch_url_sources(sb)
+    for src in url_sources:
+        try:
+            logger.info(f"Running URL watcher: {src['label']} ({src['url'][:60]})")
+            scraper = UrlWatcherScraper(url=src["url"], label=src["label"])
+            result = scraper.run()
+            new = result.get("new", 0)
+            drops = result.get("drops", 0)
+            total_new += new
+            total_drops += drops
+            if new > 0 or drops > 0:
+                alert_items.append(result)
+        except Exception as e:
+            logger.warning(f"URL watcher failed for {src['label']}: {e}")
 
     logger.info(
         f"=== Run complete: {total_new} new products, "

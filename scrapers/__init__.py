@@ -4,6 +4,7 @@ from .ebay import EbayScraper
 from .aliexpress import AliExpressScraper
 from .google_shopping import GoogleShoppingScraper
 from .thediceshoponline import TheDiceShopScraper
+from .url_watcher import UrlWatcherScraper
 
 __all__ = [
     "ChessexScraper",
@@ -11,4 +12,5 @@ __all__ = [
     "AliExpressScraper",
     "GoogleShoppingScraper",
     "TheDiceShopScraper",
+    "UrlWatcherScraper",
 ]

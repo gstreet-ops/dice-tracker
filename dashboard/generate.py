@@ -198,6 +198,7 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
   <nav class="nav">
     <a class="active" id="nav-results" data-page="results">Results</a>
     <a id="nav-watchlist" data-page="watchlist">Watchlist</a>
+    <a id="nav-sources" data-page="sources">Sources</a>
     <a id="nav-settings" data-page="settings">Settings</a>
   </nav>
 </div>
@@ -273,6 +274,42 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
   </div>
 </div>
 
+<!-- SOURCES -->
+<div id="page-sources" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div>
+      <h2 style="font-size:18px;font-weight:600;margin-bottom:4px">URL Sources</h2>
+      <p class="meta" style="margin:0">Paste any product URL to track its price on every scraper run.</p>
+    </div>
+    <button class="btn btn-green run-btn">
+      <span>&#9654;</span> Run search now
+    </button>
+  </div>
+
+  <div class="card">
+    <h3 style="font-size:14px;font-weight:600;margin-bottom:14px">Add URL source</h3>
+    <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:12px;align-items:end">
+      <div>
+        <div class="setting-label">Label</div>
+        <input type="text" id="src-label" placeholder="e.g. eBay Gold Dice Set">
+      </div>
+      <div>
+        <div class="setting-label">Product URL</div>
+        <input type="text" id="src-url" placeholder="https://...">
+      </div>
+      <div>
+        <button class="btn btn-primary" id="src-add-btn">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="sources-items" style="min-height:40px">
+      <p style="color:#999;font-size:14px">Loading sources...</p>
+    </div>
+  </div>
+</div>
+
 <!-- SETTINGS -->
 <div id="page-settings" class="page">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
@@ -299,15 +336,6 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
         <input type="number" id="s-minsize" style="width:150px">
       </div>
       <hr class="divider">
-      <div class="setting-row">
-        <div class="setting-label">GitHub Personal Access Token</div>
-        <div class="setting-desc">
-          Required for the "Run search now" button. Create a token at GitHub &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens with <strong>workflow</strong> scope only.
-          Stored in Supabase settings table &mdash; not hardcoded anywhere.
-        </div>
-        <input type="password" id="s-github-pat" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-      </div>
-      <hr class="divider">
       <h3 style="font-size:15px;font-weight:600;margin-bottom:4px">Email alerts</h3>
       <div class="setting-row">
         <div class="setting-label">Alert sender email</div>
@@ -324,8 +352,22 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
         <div class="setting-desc">Email address to receive alerts</div>
         <input type="text" id="s-alert-to" placeholder="recipient@example.com">
       </div>
-      <div style="margin-top:18px;display:flex;gap:10px">
+      <div style="margin-top:18px;display:flex;gap:10px;align-items:center">
         <button type="submit" class="btn btn-primary">Save settings</button>
+      </div>
+      <div style="margin-top:14px">
+        <a id="advanced-toggle" style="font-size:13px;color:#888;cursor:pointer;text-decoration:underline">Advanced settings</a>
+      </div>
+      <div id="advanced-section" style="display:none">
+        <hr class="divider">
+        <div class="setting-row">
+          <div class="setting-label">GitHub Personal Access Token</div>
+          <div class="setting-desc">
+            Required for the "Run search now" button. Create a token at GitHub &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens with <strong>workflow</strong> scope only.
+            Stored in Supabase settings table &mdash; not hardcoded anywhere.
+          </div>
+          <input type="password" id="s-github-pat" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        </div>
       </div>
     </form>
   </div>
@@ -391,6 +433,7 @@ function show(page, el) {{
   if (el) el.classList.add('active');
   if (page === 'settings') loadSettings();
   if (page === 'watchlist') loadWatchlist();
+  if (page === 'sources') loadSources();
 }}
 
 // --- Toast ---
@@ -638,6 +681,143 @@ async function toggleWatchlist(id, currentlyActive) {{
   loadWatchlist();
 }}
 
+// --- Sources (URL watcher) ---
+async function loadSources() {{
+  var data = await sbSelect('url_sources', 'order=created_at.asc');
+  renderSources(data || []);
+}}
+
+function renderSources(items) {{
+  var container = document.getElementById('sources-items');
+  container.innerHTML = '';
+  if (!items.length) {{
+    container.innerHTML = '<p style="color:#999;font-size:14px">No URL sources yet. Add one above.</p>';
+    return;
+  }}
+  items.forEach(function(item) {{
+    var active = item.is_active !== false;
+    var row = document.createElement('div');
+    row.className = 'watchlist-item';
+
+    var labelDiv = document.createElement('div');
+    labelDiv.className = 'watchlist-name';
+    labelDiv.textContent = item.label;
+    if (!active) {{
+      var badge = document.createElement('span');
+      badge.style.cssText = 'color:#999;font-size:11px';
+      badge.textContent = ' (paused)';
+      labelDiv.appendChild(badge);
+    }}
+
+    var urlDiv = document.createElement('div');
+    urlDiv.className = 'watchlist-keywords';
+    var urlLink = document.createElement('a');
+    urlLink.href = item.url;
+    urlLink.target = '_blank';
+    urlLink.textContent = item.url.length > 60 ? item.url.substring(0, 60) + '...' : item.url;
+    urlDiv.appendChild(urlLink);
+
+    var editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-secondary';
+    editBtn.style.cssText = 'padding:5px 12px;font-size:12px';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', function() {{
+      row.innerHTML = '';
+      row.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:12px 0;border-bottom:1px solid #f0f0f0';
+
+      var li = document.createElement('input');
+      li.type = 'text';
+      li.value = item.label;
+      li.style.cssText = 'width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px';
+
+      var ui = document.createElement('input');
+      ui.type = 'text';
+      ui.value = item.url;
+      ui.style.cssText = 'width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px';
+
+      var ll = document.createElement('div');
+      ll.style.cssText = 'font-size:12px;color:#888;margin-bottom:2px';
+      ll.textContent = 'Label';
+      var ul = document.createElement('div');
+      ul.style.cssText = 'font-size:12px;color:#888;margin-bottom:2px';
+      ul.textContent = 'URL';
+
+      var lg = document.createElement('div');
+      lg.appendChild(ll); lg.appendChild(li);
+      var ug = document.createElement('div');
+      ug.appendChild(ul); ug.appendChild(ui);
+
+      var br = document.createElement('div');
+      br.style.cssText = 'display:flex;gap:8px';
+
+      var sb2 = document.createElement('button');
+      sb2.className = 'btn btn-primary';
+      sb2.style.cssText = 'padding:5px 16px;font-size:12px';
+      sb2.textContent = 'Save';
+      sb2.addEventListener('click', async function() {{
+        sb2.disabled = true;
+        sb2.textContent = 'Saving...';
+        await sbUpdate('url_sources', {{
+          label: li.value.trim(),
+          url: ui.value.trim()
+        }}, 'id=eq.' + item.id);
+        toast('Updated');
+        loadSources();
+      }});
+
+      var cb = document.createElement('button');
+      cb.className = 'btn btn-secondary';
+      cb.style.cssText = 'padding:5px 16px;font-size:12px';
+      cb.textContent = 'Cancel';
+      cb.addEventListener('click', function() {{ loadSources(); }});
+
+      br.appendChild(sb2);
+      br.appendChild(cb);
+      row.appendChild(lg);
+      row.appendChild(ug);
+      row.appendChild(br);
+    }});
+
+    var toggleBtn = document.createElement('button');
+    toggleBtn.className = 'btn btn-secondary';
+    toggleBtn.style.cssText = 'padding:5px 12px;font-size:12px';
+    toggleBtn.textContent = active ? 'Pause' : 'Resume';
+    toggleBtn.addEventListener('click', function() {{
+      sbUpdate('url_sources', {{ is_active: !active }}, 'id=eq.' + item.id).then(loadSources);
+    }});
+
+    var delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger';
+    delBtn.style.cssText = 'padding:5px 12px;font-size:12px';
+    delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', function() {{
+      if (!confirm('Delete this source?')) return;
+      sbDelete('url_sources', 'id=eq.' + item.id).then(function() {{
+        toast('Deleted');
+        loadSources();
+      }});
+    }});
+
+    row.appendChild(labelDiv);
+    row.appendChild(urlDiv);
+    row.appendChild(editBtn);
+    row.appendChild(toggleBtn);
+    row.appendChild(delBtn);
+    container.appendChild(row);
+  }});
+}}
+
+async function addSource() {{
+  var label = document.getElementById('src-label').value.trim();
+  var url = document.getElementById('src-url').value.trim();
+  if (!label || !url) {{ toast('Label and URL are required'); return; }}
+  await sbInsert('url_sources', {{ label: label, url: url, is_active: true }});
+  document.getElementById('src-label').value = '';
+  document.getElementById('src-url').value = '';
+  toast('Added source');
+  loadSources();
+}}
+
 // --- Init: wire up all events (no inline handlers) ---
 document.querySelectorAll('.nav a[data-page]').forEach(function(link) {{
   link.addEventListener('click', function() {{ show(link.dataset.page, link); }});
@@ -646,7 +826,12 @@ document.querySelectorAll('.run-btn').forEach(function(btn) {{
   btn.addEventListener('click', function() {{ runNow(btn); }});
 }});
 document.getElementById('wl-add-btn').addEventListener('click', addWatchlistItem);
+document.getElementById('src-add-btn').addEventListener('click', addSource);
 document.getElementById('settings-form').addEventListener('submit', saveSettings);
+document.getElementById('advanced-toggle').addEventListener('click', function() {{
+  var sec = document.getElementById('advanced-section');
+  sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+}});
 loadSettings();
 loadWatchlist();
 </script>
