@@ -143,7 +143,6 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product Tracker</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *{{box-sizing:border-box;margin:0;padding:0}}
     body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f7f7f7;color:#1a1a1a}}
@@ -323,13 +322,47 @@ const SB_KEY = "{supabase_key}";
 const GH_REPO = "{github_repo}";
 const GH_WORKFLOW = "{github_workflow}";
 
-let sb;
-function getSB() {{
-  if (!sb) {{
-    if (!window.supabase) {{ toast('Supabase not loaded yet — try again'); return null; }}
-    sb = window.supabase.createClient(SB_URL, SB_KEY);
-  }}
-  return sb;
+// Plain fetch wrappers — no SDK dependency
+async function sbSelect(table, filter="") {{
+  const r = await fetch(`${{SB_URL}}/rest/v1/${{table}}?select=*${{filter ? '&' + filter : ''}}`, {{
+    headers: {{"apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY}}
+  }});
+  return r.json();
+}}
+
+async function sbUpsert(table, data) {{
+  await fetch(`${{SB_URL}}/rest/v1/${{table}}`, {{
+    method: "POST",
+    headers: {{"apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY,
+              "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates"}},
+    body: JSON.stringify(data)
+  }});
+}}
+
+async function sbInsert(table, data) {{
+  const r = await fetch(`${{SB_URL}}/rest/v1/${{table}}`, {{
+    method: "POST",
+    headers: {{"apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY,
+              "Content-Type": "application/json", "Prefer": "return=representation"}},
+    body: JSON.stringify(data)
+  }});
+  return r.json();
+}}
+
+async function sbUpdate(table, data, filter) {{
+  await fetch(`${{SB_URL}}/rest/v1/${{table}}?${{filter}}`, {{
+    method: "PATCH",
+    headers: {{"apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY,
+              "Content-Type": "application/json"}},
+    body: JSON.stringify(data)
+  }});
+}}
+
+async function sbDelete(table, filter) {{
+  await fetch(`${{SB_URL}}/rest/v1/${{table}}?${{filter}}`, {{
+    method: "DELETE",
+    headers: {{"apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY}}
+  }});
 }}
 
 // --- Tab navigation ---
@@ -356,8 +389,7 @@ async function runNow(btn) {{
   btn.disabled = true;
   btn.innerHTML = '<span class="run-status running">Triggering...</span>';
   try {{
-    const {{ data }} = await getSB().from('settings').select('value').eq('key', 'github_pat').single();
-    const pat = data && data.value;
+    const pat = await sbSelect('settings', 'key=eq.github_pat').then(d => d[0]?.value);
     if (!pat) {{
       toast('Set your GitHub PAT in Settings first');
       btn.disabled = false;
@@ -394,7 +426,7 @@ async function runNow(btn) {{
 
 // --- Settings ---
 async function loadSettings() {{
-  const {{ data }} = await getSB().from('settings').select('key, value');
+  const data = await sbSelect('settings');
   const s = {{}};
   (data || []).forEach(r => s[r.key] = r.value);
   document.getElementById('s-keywords').value = s.search_keywords || '';
@@ -407,19 +439,17 @@ async function saveSettings(e) {{
   e.preventDefault();
   const pairs = [
     ['search_keywords', document.getElementById('s-keywords').value],
-    ['max_price_usd', document.getElementById('s-maxprice').value],
-    ['min_size_mm', document.getElementById('s-minsize').value],
-    ['github_pat', document.getElementById('s-github-pat').value],
+    ['max_price_usd',   document.getElementById('s-maxprice').value],
+    ['min_size_mm',     document.getElementById('s-minsize').value],
+    ['github_pat',      document.getElementById('s-github-pat').value],
   ];
-  for (const [key, value] of pairs) {{
-    await getSB().from('settings').upsert({{ key, value }}, {{ onConflict: 'key' }});
-  }}
+  await sbUpsert('settings', pairs.map(([key,value]) => ({{key, value}})));
   toast('Settings saved');
 }}
 
 // --- Watchlist ---
 async function loadWatchlist() {{
-  const {{ data, error }} = await getSB().from('watchlist').select('*').order('created_at', {{ ascending: true }});
+  const data = await sbSelect('watchlist', 'order=created_at.asc');
   renderWatchlist(data || []);
 }}
 
@@ -451,8 +481,7 @@ async function addWatchlistItem() {{
   const maxPrice = document.getElementById('wl-maxprice').value;
   if (!name || !keywords) {{ toast('Name and keywords are required'); return; }}
   const row = {{ name, keywords, max_price: maxPrice || null, is_active: true }};
-  const {{ error }} = await getSB().from('watchlist').insert(row);
-  if (error) {{ toast('Error: ' + error.message); return; }}
+  await sbInsert('watchlist', row);
   document.getElementById('wl-name').value = '';
   document.getElementById('wl-keywords').value = '';
   document.getElementById('wl-maxprice').value = '';
@@ -462,13 +491,13 @@ async function addWatchlistItem() {{
 
 async function deleteWatchlist(id) {{
   if (!confirm('Delete this watchlist item?')) return;
-  await getSB().from('watchlist').delete().eq('id', id);
+  await sbDelete('watchlist', 'id=eq.' + id);
   toast('Deleted');
   loadWatchlist();
 }}
 
 async function toggleWatchlist(id, currentlyActive) {{
-  await getSB().from('watchlist').update({{ is_active: !currentlyActive }}).eq('id', id);
+  await sbUpdate('watchlist', {{ is_active: !currentlyActive }}, 'id=eq.' + id);
   loadWatchlist();
 }}
 
