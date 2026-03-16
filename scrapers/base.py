@@ -5,6 +5,7 @@ All source scrapers inherit from this.
 import os
 import time
 import logging
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
@@ -31,7 +32,7 @@ class BaseScraper:
         self.supabase = get_supabase()
         self.results = []
 
-    def fetch(self) -> list[dict]:
+    def fetch(self) -> list:
         """Override in subclass. Return list of raw result dicts."""
         raise NotImplementedError
 
@@ -116,7 +117,7 @@ class BaseScraper:
             "pip_style": item.get("pip_style"),
             "set_count": item.get("set_count"),
             "score": scored["score"],
-            "last_seen": "now()",
+            "last_seen": datetime.now(timezone.utc).isoformat(),
         }
 
         if is_new:

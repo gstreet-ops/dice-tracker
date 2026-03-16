@@ -21,7 +21,7 @@ CHESSEX_50MM_URL = "https://www.chessex.com/50mm-loose-dice-d6-large-pips"
 class ChessexScraper(BaseScraper):
     source = "chessex"
 
-    def fetch(self) -> list[dict]:
+    def fetch(self) -> list:
         results = []
         try:
             resp = requests.get(CHESSEX_50MM_URL, headers=HEADERS, timeout=15)

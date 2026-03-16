@@ -36,7 +36,10 @@ jobs:
           PRICE_DROP_THRESHOLD_PCT: '5'
           ALERT_ON_NEW: 'true'
           ALERT_ON_PRICE_DROP: 'true'
-        run: python scrapers/run.py
+        run: |
+          echo "SUPABASE_URL is set: ${{ secrets.SUPABASE_URL != '' }}"
+          echo "SUPABASE_SERVICE_KEY is set: ${{ secrets.SUPABASE_SERVICE_KEY != '' }}"
+          python scrapers/run.py
 
       - name: Deploy dashboard to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
