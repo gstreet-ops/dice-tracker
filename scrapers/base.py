@@ -85,15 +85,19 @@ class BaseScraper:
         price_usd = item.get("price_usd")
         size_mm = item.get("size_mm") or infer_size_mm(title)
 
-        scored = score_product(
-            title=title,
-            description=item.get("description", ""),
-            size_mm=size_mm,
-            price_usd=price_usd,
-        )
+        # Skip dice-specific scoring for watchlist items
+        if getattr(self, "watchlist_category", None):
+            scored = {"score": 50, "excluded": False}
+        else:
+            scored = score_product(
+                title=title,
+                description=item.get("description", ""),
+                size_mm=size_mm,
+                price_usd=price_usd,
+            )
 
         if scored["excluded"]:
-            self.logger.debug(f"Excluded: {title[:60]} — {scored['reason']}")
+            self.logger.debug(f"Excluded: {title[:60]} — {scored.get('reason', '')}")
             return False, False
 
         # Check if product exists
