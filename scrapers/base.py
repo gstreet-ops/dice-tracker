@@ -85,8 +85,10 @@ class BaseScraper:
         price_usd = item.get("price_usd")
         size_mm = item.get("size_mm") or infer_size_mm(title)
 
-        # Skip dice-specific scoring for watchlist items
-        if getattr(self, "watchlist_category", None):
+        # Use pre-set score if provided, skip scoring for watchlist items
+        if "score" in item and item["score"] is not None:
+            scored = {"score": item["score"], "excluded": False}
+        elif getattr(self, "watchlist_category", None):
             scored = {"score": 50, "excluded": False}
         else:
             scored = score_product(

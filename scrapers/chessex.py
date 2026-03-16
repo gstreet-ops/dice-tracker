@@ -74,20 +74,54 @@ class ChessexScraper(BaseScraper):
         except Exception as e:
             self.logger.error(f"Chessex fetch error: {e}")
 
-        # Always include the known gold variant as a tracked item
-        results.append({
-            "title": "Chessex Lustrous Gold/Silver 50mm d6",
-            "url": "https://www.chessex.com/lustrous-50mm-wpips-goldsilver-d6",
-            "image_url": "",
-            "price_usd": 19.98,
-            "size_mm": 50.0,
-            "material": "resin",
-            "finish": "gold",
-            "pip_style": "engraved",
-            "set_count": 1,
-            "in_stock": True,
-            "source": "chessex",
-        })
+        # Always include known 50mm products as tracked items
+        known = [
+            {
+                "title": "Chessex Lustrous Gold/Silver 50mm d6",
+                "url": "https://www.chessex.com/lustrous-gold-silver-50mm-d6",
+                "finish": "gold",
+                "score": 85,
+            },
+            {
+                "title": "Chessex Lustrous Pewter/Black 50mm d6",
+                "url": "https://www.chessex.com/lustrous-pewter-black-50mm-d6",
+                "finish": "pewter",
+                "score": 75,
+            },
+            {
+                "title": "Chessex Gemini Gold-Green/White 50mm d6",
+                "url": "https://www.chessex.com/gemini-gold-green-white-50mm-d6",
+                "finish": "gold",
+                "score": 75,
+            },
+            {
+                "title": "Chessex Opaque Gold/Black 50mm d6",
+                "url": "https://www.chessex.com/opaque-gold-black-50mm-d6",
+                "finish": "gold",
+                "score": 75,
+            },
+            {
+                "title": "Chessex Borealis Gold/Silver 50mm d6",
+                "url": "https://www.chessex.com/borealis-gold-silver-50mm-d6",
+                "finish": "gold",
+                "score": 75,
+            },
+        ]
+        for item in known:
+            results.append({
+                "title": item["title"],
+                "url": item["url"],
+                "image_url": "",
+                "price_usd": 19.98,
+                "size_mm": 50.0,
+                "material": "resin",
+                "finish": item["finish"],
+                "pip_style": "engraved",
+                "set_count": 1,
+                "in_stock": True,
+                "source": "chessex",
+                "score": item["score"],
+            })
 
         return results
 

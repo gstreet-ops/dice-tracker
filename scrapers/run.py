@@ -11,6 +11,7 @@ from scrapers import (
     EbayScraper,
     AliExpressScraper,
     GoogleShoppingScraper,
+    TheDiceShopScraper,
 )
 from alerts.email import send_alert
 from dashboard.generate import generate_dashboard
@@ -44,6 +45,7 @@ def run_all():
         EbayScraper(),
         AliExpressScraper(),
         GoogleShoppingScraper(),
+        TheDiceShopScraper(),
     ]
 
     total_new = 0
