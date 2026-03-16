@@ -12,6 +12,7 @@ jobs:
       contents: write
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION: node20
 
     steps:
       - name: Checkout repo
