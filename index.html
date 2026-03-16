@@ -66,7 +66,7 @@
 <!-- RESULTS -->
 <div id="page-results" class="page active">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-    <p class="meta" style="margin:0">Last updated: 2026-03-16 12:08 UTC &nbsp;&middot;&nbsp; Last search: 2026-03-16 12:08</p>
+    <p class="meta" style="margin:0">Last updated: 2026-03-16 12:11 UTC &nbsp;&middot;&nbsp; Last search: 2026-03-16 12:11</p>
     <button class="btn btn-green run-btn">
       <span>&#9654;</span> Run search now
     </button>
@@ -364,13 +364,92 @@ function renderWatchlist(items) {
     priceDiv.className = 'watchlist-price';
     priceDiv.textContent = price;
 
-    const toggleBtn = document.createElement('button');
+    var editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-secondary';
+    editBtn.style.cssText = 'padding:5px 12px;font-size:12px';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', function() {
+      // Replace row content with inline edit form
+      row.innerHTML = '';
+      row.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:12px 0;border-bottom:1px solid #f0f0f0';
+
+      var nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.value = item.name;
+      nameInput.style.cssText = 'width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px';
+
+      var kwInput = document.createElement('textarea');
+      kwInput.rows = 3;
+      kwInput.value = (item.keywords || '').replace(/\\n/g, '\n');
+      kwInput.style.cssText = 'width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit';
+
+      var priceInput = document.createElement('input');
+      priceInput.type = 'number';
+      priceInput.value = item.max_price || '';
+      priceInput.placeholder = 'Max price (optional)';
+      priceInput.style.cssText = 'width:120px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px';
+
+      var nameLabel = document.createElement('div');
+      nameLabel.style.cssText = 'font-size:12px;color:#888;margin-bottom:2px';
+      nameLabel.textContent = 'Name';
+      var kwLabel = document.createElement('div');
+      kwLabel.style.cssText = 'font-size:12px;color:#888;margin-bottom:2px';
+      kwLabel.textContent = 'Keywords (one per line)';
+      var priceLabel = document.createElement('div');
+      priceLabel.style.cssText = 'font-size:12px;color:#888;margin-bottom:2px';
+      priceLabel.textContent = 'Max price (USD)';
+
+      var nameGroup = document.createElement('div');
+      nameGroup.appendChild(nameLabel);
+      nameGroup.appendChild(nameInput);
+      var kwGroup = document.createElement('div');
+      kwGroup.appendChild(kwLabel);
+      kwGroup.appendChild(kwInput);
+      var priceGroup = document.createElement('div');
+      priceGroup.appendChild(priceLabel);
+      priceGroup.appendChild(priceInput);
+
+      var btnRow = document.createElement('div');
+      btnRow.style.cssText = 'display:flex;gap:8px';
+
+      var saveBtn = document.createElement('button');
+      saveBtn.className = 'btn btn-primary';
+      saveBtn.style.cssText = 'padding:5px 16px;font-size:12px';
+      saveBtn.textContent = 'Save';
+      saveBtn.addEventListener('click', async function() {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+        await sbUpdate('watchlist', {
+          name: nameInput.value.trim(),
+          keywords: kwInput.value.trim(),
+          max_price: priceInput.value || null
+        }, 'id=eq.' + item.id);
+        toast('Updated');
+        loadWatchlist();
+      });
+
+      var cancelBtn = document.createElement('button');
+      cancelBtn.className = 'btn btn-secondary';
+      cancelBtn.style.cssText = 'padding:5px 16px;font-size:12px';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.addEventListener('click', function() { loadWatchlist(); });
+
+      btnRow.appendChild(saveBtn);
+      btnRow.appendChild(cancelBtn);
+
+      row.appendChild(nameGroup);
+      row.appendChild(kwGroup);
+      row.appendChild(priceGroup);
+      row.appendChild(btnRow);
+    });
+
+    var toggleBtn = document.createElement('button');
     toggleBtn.className = 'btn btn-secondary';
     toggleBtn.style.cssText = 'padding:5px 12px;font-size:12px';
     toggleBtn.textContent = active ? 'Pause' : 'Resume';
     toggleBtn.addEventListener('click', function() { toggleWatchlist(item.id, active); });
 
-    const delBtn = document.createElement('button');
+    var delBtn = document.createElement('button');
     delBtn.className = 'btn btn-danger';
     delBtn.style.cssText = 'padding:5px 12px;font-size:12px';
     delBtn.textContent = 'Delete';
@@ -379,6 +458,7 @@ function renderWatchlist(items) {
     row.appendChild(nameDiv);
     row.appendChild(kwDiv);
     row.appendChild(priceDiv);
+    row.appendChild(editBtn);
     row.appendChild(toggleBtn);
     row.appendChild(delBtn);
     container.appendChild(row);
