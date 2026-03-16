@@ -66,7 +66,7 @@
 <!-- RESULTS -->
 <div id="page-results" class="page active">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-    <p class="meta" style="margin:0">Last updated: 2026-03-16 12:12 UTC &nbsp;&middot;&nbsp; Last search: 2026-03-16 12:12</p>
+    <p class="meta" style="margin:0">Last updated: 2026-03-16 12:34 UTC &nbsp;&middot;&nbsp; Last search: 2026-03-16 12:34</p>
     <button class="btn btn-green run-btn">
       <span>&#9654;</span> Run search now
     </button>
@@ -184,6 +184,23 @@
           Stored in Supabase settings table &mdash; not hardcoded anywhere.
         </div>
         <input type="password" id="s-github-pat" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+      </div>
+      <hr class="divider">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:4px">Email alerts</h3>
+      <div class="setting-row">
+        <div class="setting-label">Alert sender email</div>
+        <div class="setting-desc">Gmail address alerts are sent from</div>
+        <input type="text" id="s-alert-from" placeholder="you@gmail.com">
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Gmail app password</div>
+        <div class="setting-desc">16-char app password from Google Account &rarr; Security &rarr; App Passwords</div>
+        <input type="password" id="s-alert-pw" placeholder="xxxx xxxx xxxx xxxx">
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Alert recipient email</div>
+        <div class="setting-desc">Email address to receive alerts</div>
+        <input type="text" id="s-alert-to" placeholder="recipient@example.com">
       </div>
       <div style="margin-top:18px;display:flex;gap:10px">
         <button type="submit" class="btn btn-primary">Save settings</button>
@@ -311,15 +328,21 @@ async function loadSettings() {
   document.getElementById('s-maxprice').value = s.max_price_usd || '150';
   document.getElementById('s-minsize').value = s.min_size_mm || '50';
   document.getElementById('s-github-pat').value = s.github_pat || '';
+  document.getElementById('s-alert-from').value = s.alert_from_email || '';
+  document.getElementById('s-alert-pw').value = s.alert_gmail_password || '';
+  document.getElementById('s-alert-to').value = s.alert_to_email || '';
 }
 
 async function saveSettings(e) {
   e.preventDefault();
   const pairs = [
-    ['search_keywords', document.getElementById('s-keywords').value],
-    ['max_price_usd',   document.getElementById('s-maxprice').value],
-    ['min_size_mm',     document.getElementById('s-minsize').value],
-    ['github_pat',      document.getElementById('s-github-pat').value],
+    ['search_keywords',      document.getElementById('s-keywords').value],
+    ['max_price_usd',        document.getElementById('s-maxprice').value],
+    ['min_size_mm',          document.getElementById('s-minsize').value],
+    ['github_pat',           document.getElementById('s-github-pat').value],
+    ['alert_from_email',     document.getElementById('s-alert-from').value],
+    ['alert_gmail_password', document.getElementById('s-alert-pw').value],
+    ['alert_to_email',       document.getElementById('s-alert-to').value],
   ];
   await sbUpsert('settings', pairs.map(([key,value]) => ({key, value})));
   toast('Settings saved');
