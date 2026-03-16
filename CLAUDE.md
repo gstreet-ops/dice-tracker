@@ -80,6 +80,15 @@ dice-tracker/
 - Price: Best value — no hard cap
 - Sources: eBay worldwide, Google Shopping, AliExpress, Chessex, Etsy
 
+## Pending: eBay Official API Integration
+- eBay developer account created: username `gstreetops` at developer.ebay.com
+- **Account pending approval — expect email within 1 business day**
+- Once approved: log in → My Account → Application Access Keys → Create app → get Client ID + Client Secret
+- Add as GitHub secrets: `EBAY_CLIENT_ID` and `EBAY_CLIENT_SECRET`
+- Then ask Claude Code to: replace scrapers/ebay.py with eBay Browse API (endpoint: https://api.ebay.com/buy/browse/v1/item_summary/search)
+- Current ebay.py scraper gets blocked by anti-bot in GitHub Actions → returns 0 results
+- Watchlist items also get 0 results for the same reason — API fix resolves both
+
 ## Supabase Keep-Alive
 The scraper runs every 6h and writes to Supabase — this prevents the free tier pause.
 A separate keepalive.yml workflow also pings every 3 days as a safety net.
