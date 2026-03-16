@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product Tracker</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f7f7f7;color:#1a1a1a}
@@ -62,11 +61,11 @@
   <h1>Product Tracker</h1>
   <nav class="nav">
     <a class="active" id="nav-results" data-page="results">Results</a>
-    <a id="nav-analytics" data-page="analytics">Analytics</a>
+    <a href="analytics.html" style="color:#555">Analytics</a>
     <a id="nav-watchlist" data-page="watchlist">Watchlist</a>
     <a id="nav-sources" data-page="sources">Sources</a>
     <a id="nav-settings" data-page="settings">Settings</a>
-    <a href="roadmap.html" target="_blank" style="color:#888">Roadmap &#8599;</a>
+    <a href="roadmap.html" style="color:#888">Roadmap &#8599;</a>
   </nav>
   <div class="header-right">
     <span id="run-status-indicator" style="font-size:12px;color:#888"></span>
@@ -79,7 +78,7 @@
 <!-- RESULTS -->
 <div id="page-results" class="page active">
   <div style="margin-bottom:20px">
-    <p class="meta" style="margin:0">Last updated: 2026-03-16 13:47 UTC &nbsp;&middot;&nbsp; Last search: 2026-03-16 13:47</p>
+    <p class="meta" style="margin:0">Last updated: 2026-03-16 15:02 UTC &nbsp;&middot;&nbsp; Last search: 2026-03-16 15:01</p>
   </div>
   <div class="stats">
     <div class="stat"><div class="stat-val">9</div><div class="stat-lbl">Products found</div></div>
@@ -114,7 +113,7 @@
           <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center">
             <span style="color:#27ae60;font-weight:600">85</span>
           </td>
-          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">4m ago</td>
+          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">3m ago</td>
         </tr>
         <tr>
           <td style="padding:10px 8px;border-bottom:1px solid #eee">
@@ -132,7 +131,7 @@
           <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center">
             <span style="color:#27ae60;font-weight:600">75</span>
           </td>
-          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">4m ago</td>
+          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">3m ago</td>
         </tr>
         <tr>
           <td style="padding:10px 8px;border-bottom:1px solid #eee">
@@ -150,7 +149,7 @@
           <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center">
             <span style="color:#27ae60;font-weight:600">75</span>
           </td>
-          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">4m ago</td>
+          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">3m ago</td>
         </tr>
         <tr>
           <td style="padding:10px 8px;border-bottom:1px solid #eee">
@@ -168,7 +167,7 @@
           <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center">
             <span style="color:#27ae60;font-weight:600">75</span>
           </td>
-          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">4m ago</td>
+          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">3m ago</td>
         </tr>
         <tr>
           <td style="padding:10px 8px;border-bottom:1px solid #eee">
@@ -186,7 +185,7 @@
           <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center">
             <span style="color:#27ae60;font-weight:600">75</span>
           </td>
-          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">4m ago</td>
+          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">3m ago</td>
         </tr>
         <tr>
           <td style="padding:10px 8px;border-bottom:1px solid #eee">
@@ -240,7 +239,7 @@
           <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center">
             <span style="color:#f39c12;font-weight:600">65</span>
           </td>
-          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">47m ago</td>
+          <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;font-size:12px;color:#aaa">2h ago</td>
         </tr>
         <tr>
           <td style="padding:10px 8px;border-bottom:1px solid #eee">
@@ -262,44 +261,6 @@
         </tr></tbody>
     </table>
     <p style="margin-top:20px;font-size:12px;color:#bbb">Score: 70+ = strong &nbsp;&middot;&nbsp; 40&ndash;69 = partial &nbsp;&middot;&nbsp; below 40 = weak</p>
-  </div>
-</div>
-
-<!-- ANALYTICS -->
-<div id="page-analytics" class="page">
-  <div style="margin-bottom:20px">
-    <h2 style="font-size:18px;font-weight:600;margin-bottom:4px">Analytics</h2>
-    <p class="meta" style="margin:0">Price history and change tracking across all products.</p>
-  </div>
-
-  <!-- Price History Chart -->
-  <div class="card">
-    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Price history</h3>
-    <select id="chart-product-select" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:7px;font-size:14px;background:#fafafa;margin-bottom:14px">
-      <option value="">Select a product...</option>
-    </select>
-    <div style="position:relative;height:280px">
-      <canvas id="price-chart"></canvas>
-    </div>
-    <p id="chart-no-data" style="display:none;text-align:center;color:#999;font-size:13px;margin-top:16px">No price changes detected yet</p>
-    <div id="chart-stats" style="display:none;margin-top:16px;display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
-    </div>
-  </div>
-
-  <!-- Price Change Table -->
-  <div class="card" style="margin-top:16px">
-    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Price changes</h3>
-    <table>
-      <thead><tr>
-        <th>Product</th>
-        <th style="text-align:right">Current</th>
-        <th style="text-align:right">24h ago</th>
-        <th style="text-align:right">Change</th>
-        <th style="text-align:center">Days tracked</th>
-      </tr></thead>
-      <tbody id="price-change-tbody"></tbody>
-    </table>
-    <p id="price-change-empty" style="display:none;text-align:center;color:#999;font-size:13px;margin-top:12px">No price data yet.</p>
   </div>
 </div>
 
@@ -492,7 +453,6 @@ function show(page, el) {
   if (page === 'settings') loadSettings();
   if (page === 'watchlist') loadWatchlist();
   if (page === 'sources') loadSources();
-  if (page === 'analytics') loadAnalytics();
 }
 
 // --- Toast ---
@@ -877,171 +837,6 @@ async function addSource() {
   loadSources();
 }
 
-// --- Analytics ---
-var priceChart = null;
-var analyticsProducts = [];
-
-async function loadAnalytics() {
-  // Fetch products with prices
-  var prods = await sbSelect('products', 'is_excluded=eq.false&order=last_seen.desc&limit=100');
-  analyticsProducts = prods || [];
-
-  // Populate dropdown
-  var sel = document.getElementById('chart-product-select');
-  var prevVal = sel.value;
-  sel.innerHTML = '<option value="">Select a product...</option>';
-  for (var i = 0; i < analyticsProducts.length; i++) {
-    var p = analyticsProducts[i];
-    var opt = document.createElement('option');
-    opt.value = p.id;
-    opt.textContent = (p.title || '').substring(0, 70) + ' (' + (p.source || '') + ')';
-    sel.appendChild(opt);
-  }
-  if (prevVal) sel.value = prevVal;
-
-  // Load price change table
-  await loadPriceChangeTable();
-}
-
-async function loadChartForProduct(productId) {
-  var noData = document.getElementById('chart-no-data');
-  var statsEl = document.getElementById('chart-stats');
-  noData.style.display = 'none';
-  statsEl.style.display = 'none';
-  statsEl.innerHTML = '';
-
-  if (!productId) {
-    if (priceChart) { priceChart.destroy(); priceChart = null; }
-    return;
-  }
-
-  var history = await sbSelect('price_history', 'product_id=eq.' + productId + '&order=scraped_at.asc');
-  if (!history || !history.length) {
-    if (priceChart) { priceChart.destroy(); priceChart = null; }
-    noData.style.display = 'block';
-    return;
-  }
-
-  var labels = history.map(function(h) {
-    var d = new Date(h.scraped_at);
-    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  });
-  var prices = history.map(function(h) { return h.price_usd; });
-
-  // Check if all prices same
-  var allSame = prices.every(function(p) { return p === prices[0]; });
-
-  if (priceChart) priceChart.destroy();
-  var ctx = document.getElementById('price-chart').getContext('2d');
-  priceChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Price (USD)',
-        data: prices,
-        borderColor: '#1976d2',
-        backgroundColor: 'rgba(25,118,210,0.1)',
-        fill: true,
-        pointRadius: 4,
-        pointBackgroundColor: '#1976d2',
-        tension: 0.2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { display: true, ticks: { maxTicksLimit: 8, font: { size: 11 } } },
-        y: { display: true, ticks: { callback: function(v) { return '$' + v; } } }
-      }
-    }
-  });
-
-  if (allSame && prices.length > 1) {
-    noData.style.display = 'block';
-    noData.textContent = 'No price changes detected yet';
-  }
-
-  // Stats
-  var current = prices[prices.length - 1];
-  var low = Math.min.apply(null, prices);
-  var high = Math.max.apply(null, prices);
-  var points = prices.length;
-  var firstDate = new Date(history[0].scraped_at);
-  var lastDate = new Date(history[history.length - 1].scraped_at);
-  var daysTracked = Math.max(1, Math.round((lastDate - firstDate) / 86400000));
-
-  statsEl.style.display = 'grid';
-  var items = [
-    ['Current', '$' + current.toFixed(2)],
-    ['All-time low', '$' + low.toFixed(2)],
-    ['All-time high', '$' + high.toFixed(2)],
-    ['Data points', points],
-    ['Days tracked', daysTracked]
-  ];
-  items.forEach(function(s) {
-    var d = document.createElement('div');
-    d.style.cssText = 'text-align:center;padding:8px;background:#fafafa;border-radius:6px';
-    d.innerHTML = '<div style="font-size:16px;font-weight:600">' + s[1] + '</div><div style="font-size:11px;color:#888;margin-top:2px">' + s[0] + '</div>';
-    statsEl.appendChild(d);
-  });
-}
-
-async function loadPriceChangeTable() {
-  var tbody = document.getElementById('price-change-tbody');
-  var emptyMsg = document.getElementById('price-change-empty');
-  tbody.innerHTML = '';
-  emptyMsg.style.display = 'none';
-
-  if (!analyticsProducts.length) {
-    emptyMsg.style.display = 'block';
-    return;
-  }
-
-  var rowCount = 0;
-  for (var i = 0; i < Math.min(analyticsProducts.length, 50); i++) {
-    var p = analyticsProducts[i];
-    var hist = await sbSelect('price_history', 'product_id=eq.' + p.id + '&order=scraped_at.desc&limit=50');
-    if (!hist || !hist.length) continue;
-
-    var current = hist[0].price_usd;
-    var price24h = null;
-    var cutoff = Date.now() - 86400000;
-    for (var j = 0; j < hist.length; j++) {
-      if (new Date(hist[j].scraped_at).getTime() <= cutoff) {
-        price24h = hist[j].price_usd;
-        break;
-      }
-    }
-    if (price24h === null && hist.length > 1) price24h = hist[hist.length - 1].price_usd;
-    if (price24h === null) price24h = current;
-
-    var change = current - price24h;
-    var changePct = price24h ? ((change / price24h) * 100) : 0;
-    var firstDate = new Date(hist[hist.length - 1].scraped_at);
-    var daysTracked = Math.max(1, Math.round((Date.now() - firstDate.getTime()) / 86400000));
-
-    var changeColor = change < 0 ? '#27ae60' : change > 0 ? '#e74c3c' : '#888';
-    var arrow = change < 0 ? '↓' : change > 0 ? '↑' : '';
-    var changeStr = change === 0 ? '—' :
-      '<span style="color:' + changeColor + '">' + arrow + ' $' + Math.abs(change).toFixed(2) + ' (' + (changePct >= 0 ? '+' : '') + changePct.toFixed(1) + '%)</span>';
-
-    var tr = document.createElement('tr');
-    tr.innerHTML =
-      '<td style="padding:8px;border-bottom:1px solid #eee;font-size:13px">' + esc((p.title || '').substring(0, 55)) + '<br><span style="font-size:11px;color:#aaa">' + esc(p.source || '') + '</span></td>' +
-      '<td style="padding:8px;border-bottom:1px solid #eee;text-align:right;font-weight:500">$' + current.toFixed(2) + '</td>' +
-      '<td style="padding:8px;border-bottom:1px solid #eee;text-align:right;color:#888">$' + price24h.toFixed(2) + '</td>' +
-      '<td style="padding:8px;border-bottom:1px solid #eee;text-align:right;font-size:13px">' + changeStr + '</td>' +
-      '<td style="padding:8px;border-bottom:1px solid #eee;text-align:center;color:#aaa;font-size:12px">' + daysTracked + 'd</td>';
-    tbody.appendChild(tr);
-    rowCount++;
-  }
-
-  if (!rowCount) emptyMsg.style.display = 'block';
-}
-
 // --- Run status indicator ---
 async function updateRunStatus() {
   try {
@@ -1070,9 +865,6 @@ document.querySelectorAll('.nav a[data-page]').forEach(function(link) {
 });
 document.getElementById('header-run-btn').addEventListener('click', function() {
   runNow(document.getElementById('header-run-btn'));
-});
-document.getElementById('chart-product-select').addEventListener('change', function() {
-  loadChartForProduct(this.value);
 });
 document.getElementById('wl-add-btn').addEventListener('click', addWatchlistItem);
 document.getElementById('src-add-btn').addEventListener('click', addSource);
