@@ -1,0 +1,34 @@
+name: Supabase keepalive
+
+on:
+  schedule:
+    - cron: '0 9 * * 1,4'   # 9am UTC every Monday and Thursday
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install supabase client
+        run: pip install supabase python-dotenv
+
+      - name: Ping Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python - <<'EOF'
+          import os
+          from supabase import create_client
+          sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
+          sb.table("keepalive").update({"pinged_at": "now()"}).eq("id", 1).execute()
+          print("Keepalive ping successful")
+          EOF
