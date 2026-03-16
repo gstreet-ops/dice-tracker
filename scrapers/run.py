@@ -16,6 +16,8 @@ from scrapers import (
 )
 from alerts.email import send_alert
 from dashboard.generate import generate_dashboard
+from dashboard.analytics_generate import generate_analytics
+from dashboard.roadmap_generate import generate_roadmap
 from scrapers.base import get_supabase
 import logging
 
@@ -135,9 +137,11 @@ def run_all():
             top_products=top_products,
         )
 
-    # Regenerate dashboard
+    # Regenerate dashboard + static pages
     generate_dashboard()
-    logger.info("Dashboard regenerated")
+    generate_analytics()
+    generate_roadmap()
+    logger.info("Dashboard + analytics + roadmap regenerated")
 
     # Ping keepalive
     _ping_keepalive()
