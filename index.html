@@ -49,6 +49,9 @@
     .watchlist-price{font-size:13px;color:#555;width:80px;text-align:right}
     .run-status{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;background:#e8f5e9;color:#27ae60;font-weight:500}
     .run-status.running{background:#fff8e1;color:#f39c12}
+    .header-right{display:flex;align-items:center;gap:14px;margin-left:auto}
+    .pulse-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#f39c12;margin-right:6px;animation:pulse 1.2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
     a{color:#0066cc}
     .divider{border:none;border-top:1px solid #f0f0f0;margin:20px 0}
   </style>
@@ -62,15 +65,18 @@
     <a id="nav-sources" data-page="sources">Sources</a>
     <a id="nav-settings" data-page="settings">Settings</a>
   </nav>
+  <div class="header-right">
+    <span id="run-status-indicator" style="font-size:12px;color:#888"></span>
+    <button class="btn btn-green" id="header-run-btn">
+      <span>&#9654;</span> Run search now
+    </button>
+  </div>
 </div>
 
 <!-- RESULTS -->
 <div id="page-results" class="page active">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-    <p class="meta" style="margin:0">Last updated: 2026-03-16 13:20 UTC &nbsp;&middot;&nbsp; Last search: 2026-03-16 13:20</p>
-    <button class="btn btn-green run-btn">
-      <span>&#9654;</span> Run search now
-    </button>
+  <div style="margin-bottom:20px">
+    <p class="meta" style="margin:0">Last updated: 2026-03-16 13:34 UTC &nbsp;&middot;&nbsp; Last search: 2026-03-16 13:34</p>
   </div>
   <div class="stats">
     <div class="stat"><div class="stat-val">9</div><div class="stat-lbl">Products found</div></div>
@@ -248,14 +254,9 @@
 
 <!-- WATCHLIST -->
 <div id="page-watchlist" class="page">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-    <div>
-      <h2 style="font-size:18px;font-weight:600;margin-bottom:4px">Watchlist</h2>
-      <p class="meta" style="margin:0">Add product categories to search for. Each item runs as a separate search.</p>
-    </div>
-    <button class="btn btn-green run-btn">
-      <span>&#9654;</span> Run search now
-    </button>
+  <div style="margin-bottom:20px">
+    <h2 style="font-size:18px;font-weight:600;margin-bottom:4px">Watchlist</h2>
+    <p class="meta" style="margin:0">Add product categories to search for. Each item runs as a separate search.</p>
   </div>
 
   <!-- Add new item form -->
@@ -290,14 +291,9 @@
 
 <!-- SOURCES -->
 <div id="page-sources" class="page">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-    <div>
-      <h2 style="font-size:18px;font-weight:600;margin-bottom:4px">URL Sources</h2>
-      <p class="meta" style="margin:0">Paste any product URL to track its price on every scraper run.</p>
-    </div>
-    <button class="btn btn-green run-btn">
-      <span>&#9654;</span> Run search now
-    </button>
+  <div style="margin-bottom:20px">
+    <h2 style="font-size:18px;font-weight:600;margin-bottom:4px">URL Sources</h2>
+    <p class="meta" style="margin:0">Paste any product URL to track its price on every scraper run.</p>
   </div>
 
   <div class="card">
@@ -326,11 +322,8 @@
 
 <!-- SETTINGS -->
 <div id="page-settings" class="page">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+  <div style="margin-bottom:20px">
     <h2 style="font-size:18px;font-weight:600">Settings</h2>
-    <button class="btn btn-green run-btn">
-      <span>&#9654;</span> Run search now
-    </button>
   </div>
   <div class="card" id="settings-card">
     <form id="settings-form">
@@ -832,12 +825,34 @@ async function addSource() {
   loadSources();
 }
 
+// --- Run status indicator ---
+async function updateRunStatus() {
+  try {
+    var data = await sbSelect('run_log', 'order=ran_at.desc&limit=1');
+    var el = document.getElementById('run-status-indicator');
+    if (data && data.length && data[0].ran_at) {
+      var ranAt = new Date(data[0].ran_at);
+      var now = new Date();
+      var diffMin = Math.round((now - ranAt) / 60000);
+      if (diffMin < 5) {
+        el.innerHTML = '<span class="pulse-dot"></span>Searching...';
+      } else if (diffMin < 60) {
+        el.textContent = 'Last run: ' + diffMin + ' min ago';
+      } else if (diffMin < 1440) {
+        el.textContent = 'Last run: ' + Math.round(diffMin / 60) + 'h ago';
+      } else {
+        el.textContent = 'Last run: ' + Math.round(diffMin / 1440) + 'd ago';
+      }
+    }
+  } catch (e) {}
+}
+
 // --- Init: wire up all events (no inline handlers) ---
 document.querySelectorAll('.nav a[data-page]').forEach(function(link) {
   link.addEventListener('click', function() { show(link.dataset.page, link); });
 });
-document.querySelectorAll('.run-btn').forEach(function(btn) {
-  btn.addEventListener('click', function() { runNow(btn); });
+document.getElementById('header-run-btn').addEventListener('click', function() {
+  runNow(document.getElementById('header-run-btn'));
 });
 document.getElementById('wl-add-btn').addEventListener('click', addWatchlistItem);
 document.getElementById('src-add-btn').addEventListener('click', addSource);
@@ -848,6 +863,8 @@ document.getElementById('advanced-toggle').addEventListener('click', function() 
 });
 loadSettings();
 loadWatchlist();
+updateRunStatus();
+setInterval(updateRunStatus, 60000);
 </script>
 </body>
 </html>
