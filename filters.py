@@ -4,7 +4,7 @@ Scores each result 0-100 based on how well it matches the target spec.
 Products scoring below EXCLUDE_THRESHOLD are rejected outright.
 """
 
-EXCLUDE_THRESHOLD = 20  # below this score = auto-excluded
+EXCLUDE_THRESHOLD = 10  # below this score = auto-excluded
 
 # Keywords that hard-exclude a result
 EXCLUDE_KEYWORDS = [

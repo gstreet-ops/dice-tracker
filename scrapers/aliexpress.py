@@ -19,6 +19,8 @@ SEARCHES = [
     "50mm gold metal dice d6",
     "jumbo gold dice engraved pips",
     "large brass zinc alloy dice",
+    "gold dice set luxury",
+    "oversized metal dice gold",
 ]
 
 

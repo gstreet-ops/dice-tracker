@@ -21,6 +21,10 @@ EBAY_SEARCHES = [
     "jumbo gold metal dice 2 inch",
     "brass gold dice 50mm",
     "large gold dice premium engraved pips",
+    "gold dice set d6 heavy metal",
+    "oversized gold dice solid",
+    "luxury gold dice set",
+    "50mm dice gold",
 ]
 
 EBAY_BASE = "https://www.ebay.com/sch/i.html"
