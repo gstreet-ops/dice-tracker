@@ -118,6 +118,7 @@ class BaseScraper:
             "set_count": item.get("set_count"),
             "score": scored["score"],
             "last_seen": datetime.now(timezone.utc).isoformat(),
+            "watchlist_category": getattr(self, "watchlist_category", None),
         }
 
         if is_new:

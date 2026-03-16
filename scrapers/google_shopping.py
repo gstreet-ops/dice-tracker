@@ -28,7 +28,8 @@ class GoogleShoppingScraper(BaseScraper):
         results = []
         seen = set()
 
-        for query in SEARCHES:
+        searches = getattr(self, 'override_keywords', None) or SEARCHES
+        for query in searches:
             try:
                 resp = requests.get(
                     "https://serpapi.com/search",

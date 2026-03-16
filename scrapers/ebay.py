@@ -37,7 +37,8 @@ class EbayScraper(BaseScraper):
         results = []
         seen_urls = set()
 
-        for query in EBAY_SEARCHES:
+        searches = getattr(self, 'override_keywords', None) or EBAY_SEARCHES
+        for query in searches:
             try:
                 params = {
                     "_nkw": query,

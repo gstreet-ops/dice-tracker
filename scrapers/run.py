@@ -20,9 +20,25 @@ import logging
 logger = logging.getLogger("run")
 
 
+def _fetch_watchlist_items(sb):
+    """Fetch active watchlist items from Supabase."""
+    try:
+        result = (
+            sb.table("watchlist")
+            .select("id, name, keywords, max_price, is_active")
+            .eq("is_active", True)
+            .execute()
+        )
+        return result.data or []
+    except Exception as e:
+        logger.warning(f"Could not fetch watchlist: {e}")
+        return []
+
+
 def run_all():
     logger.info("=== dice-tracker run starting ===")
 
+    # --- Default dice search ---
     scrapers = [
         ChessexScraper(),
         EbayScraper(),
@@ -43,6 +59,33 @@ def run_all():
 
         if new > 0 or drops > 0:
             alert_items.append(result)
+
+    # --- Watchlist searches ---
+    sb = get_supabase()
+    watchlist_items = _fetch_watchlist_items(sb)
+    for item in watchlist_items:
+        keywords = [k.strip() for k in item["keywords"].split("\n") if k.strip()]
+        if not keywords:
+            continue
+        category_name = item["name"]
+        max_price = float(item["max_price"]) if item.get("max_price") else None
+        logger.info(f"Running watchlist search: {category_name} ({len(keywords)} keywords)")
+
+        for scraper_cls in [EbayScraper, GoogleShoppingScraper]:
+            try:
+                scraper = scraper_cls()
+                scraper.watchlist_category = category_name
+                scraper.watchlist_max_price = max_price
+                scraper.override_keywords = keywords
+                result = scraper.run()
+                new = result.get("new", 0)
+                drops = result.get("drops", 0)
+                total_new += new
+                total_drops += drops
+                if new > 0 or drops > 0:
+                    alert_items.append(result)
+            except Exception as e:
+                logger.warning(f"Watchlist scraper failed for {category_name}/{scraper_cls.source}: {e}")
 
     logger.info(
         f"=== Run complete: {total_new} new products, "
