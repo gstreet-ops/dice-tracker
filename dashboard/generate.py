@@ -467,8 +467,8 @@ function renderWatchlist(items) {{
       '<div class="watchlist-name">' + esc(item.name) + (active ? '' : ' <span style="color:#999;font-size:11px">(paused)</span>') + '</div>' +
       '<div class="watchlist-keywords">' + esc(kw) + '</div>' +
       '<div class="watchlist-price">' + price + '</div>' +
-      '<button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="toggleWatchlist(\'' + item.id + '\',' + active + ')">' + (active ? 'Pause' : 'Resume') + '</button>' +
-      '<button class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="deleteWatchlist(\'' + item.id + '\')">Delete</button>' +
+      '<button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="toggleWatchlist(\\'' + item.id + '\\',' + active + ')">' + (active ? 'Pause' : 'Resume') + '</button>' +
+      '<button class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="deleteWatchlist(\\'' + item.id + '\\')">Delete</button>' +
     '</div>';
   }}).join('');
 }}
