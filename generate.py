@@ -196,9 +196,9 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
 <div class="header">
   <h1>Product Tracker</h1>
   <nav class="nav">
-    <a class="active" id="nav-results" onclick="show('results',this)">Results</a>
-    <a id="nav-watchlist" onclick="show('watchlist',this)">Watchlist</a>
-    <a id="nav-settings" onclick="show('settings',this)">Settings</a>
+    <a class="active" id="nav-results" data-page="results">Results</a>
+    <a id="nav-watchlist" data-page="watchlist">Watchlist</a>
+    <a id="nav-settings" data-page="settings">Settings</a>
   </nav>
 </div>
 
@@ -206,7 +206,7 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
 <div id="page-results" class="page active">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
     <p class="meta" style="margin:0">Last updated: {now} &nbsp;&middot;&nbsp; Last search: {last_run}</p>
-    <button class="btn btn-green" onclick="runNow(this)">
+    <button class="btn btn-green run-btn">
       <span>&#9654;</span> Run search now
     </button>
   </div>
@@ -238,7 +238,7 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
       <h2 style="font-size:18px;font-weight:600;margin-bottom:4px">Watchlist</h2>
       <p class="meta" style="margin:0">Add product categories to search for. Each item runs as a separate search.</p>
     </div>
-    <button class="btn btn-green" onclick="runNow(this)">
+    <button class="btn btn-green run-btn">
       <span>&#9654;</span> Run search now
     </button>
   </div>
@@ -259,7 +259,7 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
         <div class="setting-label">Max price (USD)</div>
         <div style="display:flex;gap:8px;align-items:end">
           <input type="number" id="wl-maxprice" placeholder="optional" style="width:100px">
-          <button class="btn btn-primary" onclick="addWatchlistItem()">Add</button>
+          <button class="btn btn-primary" id="wl-add-btn">Add</button>
         </div>
       </div>
     </div>
@@ -277,12 +277,12 @@ def _html_template(now, last_run, total, in_stock, new_count, rows,
 <div id="page-settings" class="page">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
     <h2 style="font-size:18px;font-weight:600">Settings</h2>
-    <button class="btn btn-green" onclick="runNow(this)">
+    <button class="btn btn-green run-btn">
       <span>&#9654;</span> Run search now
     </button>
   </div>
   <div class="card" id="settings-card">
-    <form onsubmit="saveSettings(event)">
+    <form id="settings-form">
       <div class="setting-row">
         <div class="setting-label">Search keywords</div>
         <div class="setting-desc">Comma-separated keyword phrases for the default dice search</div>
@@ -535,7 +535,15 @@ async function toggleWatchlist(id, currentlyActive) {{
   loadWatchlist();
 }}
 
-// --- Init ---
+// --- Init: wire up all events (no inline handlers) ---
+document.querySelectorAll('.nav a[data-page]').forEach(function(link) {{
+  link.addEventListener('click', function() {{ show(link.dataset.page, link); }});
+}});
+document.querySelectorAll('.run-btn').forEach(function(btn) {{
+  btn.addEventListener('click', function() {{ runNow(btn); }});
+}});
+document.getElementById('wl-add-btn').addEventListener('click', addWatchlistItem);
+document.getElementById('settings-form').addEventListener('submit', saveSettings);
 loadSettings();
 loadWatchlist();
 </script>
