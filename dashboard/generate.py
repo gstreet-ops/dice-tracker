@@ -455,22 +455,56 @@ async function loadWatchlist() {{
 
 function renderWatchlist(items) {{
   const container = document.getElementById('watchlist-items');
+  container.innerHTML = '';
   if (!items.length) {{
     container.innerHTML = '<p style="color:#999;font-size:14px">No watchlist items yet. Add one above.</p>';
     return;
   }}
-  container.innerHTML = items.map(item => {{
+  items.forEach(function(item) {{
+    const active = item.is_active !== false;
     const kw = (item.keywords || '').split('\\n').filter(Boolean).join(', ');
     const price = item.max_price ? '$' + Number(item.max_price).toFixed(0) : 'No limit';
-    const active = item.is_active !== false;
-    return '<div class="watchlist-item">' +
-      '<div class="watchlist-name">' + esc(item.name) + (active ? '' : ' <span style="color:#999;font-size:11px">(paused)</span>') + '</div>' +
-      '<div class="watchlist-keywords">' + esc(kw) + '</div>' +
-      '<div class="watchlist-price">' + price + '</div>' +
-      '<button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="toggleWatchlist(\\'' + item.id + '\\',' + active + ')">' + (active ? 'Pause' : 'Resume') + '</button>' +
-      '<button class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="deleteWatchlist(\\'' + item.id + '\\')">Delete</button>' +
-    '</div>';
-  }}).join('');
+
+    const row = document.createElement('div');
+    row.className = 'watchlist-item';
+
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'watchlist-name';
+    nameDiv.textContent = item.name;
+    if (!active) {{
+      const badge = document.createElement('span');
+      badge.style.cssText = 'color:#999;font-size:11px';
+      badge.textContent = ' (paused)';
+      nameDiv.appendChild(badge);
+    }}
+
+    const kwDiv = document.createElement('div');
+    kwDiv.className = 'watchlist-keywords';
+    kwDiv.textContent = kw;
+
+    const priceDiv = document.createElement('div');
+    priceDiv.className = 'watchlist-price';
+    priceDiv.textContent = price;
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'btn btn-secondary';
+    toggleBtn.style.cssText = 'padding:5px 12px;font-size:12px';
+    toggleBtn.textContent = active ? 'Pause' : 'Resume';
+    toggleBtn.addEventListener('click', function() {{ toggleWatchlist(item.id, active); }});
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger';
+    delBtn.style.cssText = 'padding:5px 12px;font-size:12px';
+    delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', function() {{ deleteWatchlist(item.id); }});
+
+    row.appendChild(nameDiv);
+    row.appendChild(kwDiv);
+    row.appendChild(priceDiv);
+    row.appendChild(toggleBtn);
+    row.appendChild(delBtn);
+    container.appendChild(row);
+  }});
 }}
 
 function esc(s) {{ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }}
