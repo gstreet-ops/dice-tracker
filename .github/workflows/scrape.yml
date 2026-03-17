@@ -35,6 +35,8 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           ALERT_TO_EMAIL: ${{ secrets.ALERT_TO_EMAIL }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+          EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
           MIN_SIZE_MM: '50'
           PRICE_DROP_THRESHOLD_PCT: '5'
           ALERT_ON_NEW: 'true'

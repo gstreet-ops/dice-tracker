@@ -1,20 +1,13 @@
 """
-ebay.py — eBay worldwide scraper for premium 50mm gold dice.
-Uses eBay's public search (no API key required).
+ebay.py — eBay worldwide scraper using the official Browse API.
+Uses Client Credentials (OAuth 2.0) for application-level access.
 """
+import os
 import time
+import base64
+import logging
 import requests
-from bs4 import BeautifulSoup
 from .base import BaseScraper
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "en-US,en;q=0.9",
-}
 
 EBAY_SEARCHES = [
     "50mm gold dice d6 engraved",
@@ -27,64 +20,112 @@ EBAY_SEARCHES = [
     "50mm dice gold",
 ]
 
-EBAY_BASE = "https://www.ebay.com/sch/i.html"
+CURRENCY_TO_USD = {
+    "USD": 1.0,
+    "GBP": 1.27,
+    "EUR": 1.09,
+    "AUD": 0.65,
+    "CAD": 0.74,
+}
+
+TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token"
+SEARCH_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search"
 
 
 class EbayScraper(BaseScraper):
     source = "ebay"
 
+    def __init__(self):
+        super().__init__()
+        self._token = None
+        self._client_id = os.environ.get("EBAY_CLIENT_ID", "")
+        self._client_secret = os.environ.get("EBAY_CLIENT_SECRET", "")
+
+    def _get_token(self) -> str:
+        """Get OAuth token, using cached value if available."""
+        if self._token:
+            return self._token
+
+        if not self._client_id or not self._client_secret:
+            raise RuntimeError("EBAY_CLIENT_ID and EBAY_CLIENT_SECRET must be set")
+
+        credentials = base64.b64encode(
+            f"{self._client_id}:{self._client_secret}".encode()
+        ).decode()
+
+        resp = requests.post(
+            TOKEN_URL,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": f"Basic {credentials}",
+            },
+            data={
+                "grant_type": "client_credentials",
+                "scope": "https://api.ebay.com/oauth/api_scope",
+            },
+            timeout=15,
+        )
+        resp.raise_for_status()
+        self._token = resp.json()["access_token"]
+        return self._token
+
     def fetch(self) -> list[dict]:
         results = []
         seen_urls = set()
 
-        searches = getattr(self, 'override_keywords', None) or EBAY_SEARCHES
+        try:
+            token = self._get_token()
+        except Exception as e:
+            self.logger.warning(f"eBay API auth failed: {e}")
+            return []
+
+        searches = getattr(self, "override_keywords", None) or EBAY_SEARCHES
         for query in searches:
             try:
-                params = {
-                    "_nkw": query,
-                    "_sacat": 0,
-                    "LH_BIN": 1,        # Buy It Now only
-                    "_sop": 12,          # Sort: best match
-                    "LH_ItemCondition": 1000,  # New
-                }
                 resp = requests.get(
-                    EBAY_BASE, params=params, headers=HEADERS, timeout=15
+                    SEARCH_URL,
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "X-EBAY-C-MARKETPLACE-ID": "EBAY_US",
+                    },
+                    params={
+                        "q": query,
+                        "limit": 50,
+                        "filter": "buyingOptions:{FIXED_PRICE}",
+                    },
+                    timeout=15,
                 )
                 resp.raise_for_status()
-                soup = BeautifulSoup(resp.text, "lxml")
+                data = resp.json()
+                items = data.get("itemSummaries", [])
+                self.logger.info(f"eBay '{query}': {len(items)} results")
 
-                listings = soup.select(".s-item")
-                self.logger.info(
-                    f"eBay '{query}': {len(listings)} listings"
-                )
-
-                for item in listings[:20]:
-                    title_el = item.select_one(".s-item__title")
-                    price_el = item.select_one(".s-item__price")
-                    link_el = item.select_one("a.s-item__link")
-                    img_el = item.select_one("img.s-item__image-img")
-
-                    if not title_el or not link_el:
-                        continue
-
-                    title = title_el.get_text(strip=True)
-                    if title.lower() == "shop on ebay":
-                        continue
-
-                    url = link_el.get("href", "").split("?")[0]
-                    if url in seen_urls:
+                for item in items:
+                    url = item.get("itemWebUrl", "")
+                    if not url or url in seen_urls:
                         continue
                     seen_urls.add(url)
 
-                    price_text = price_el.get_text(strip=True) if price_el else ""
-                    price_usd = self._parse_price(price_text)
-                    img_url = img_el.get("src", "") if img_el else ""
+                    title = item.get("title", "")
+                    price_info = item.get("price", {})
+                    currency = price_info.get("currency", "USD")
+                    price_raw = float(price_info.get("value", 0)) if price_info.get("value") else None
+
+                    price_usd = None
+                    if price_raw is not None:
+                        rate = CURRENCY_TO_USD.get(currency, 1.0)
+                        price_usd = round(price_raw * rate, 2)
+
+                    image = item.get("image", {})
+                    img_url = image.get("imageUrl", "") if image else ""
 
                     results.append({
                         "title": title,
                         "url": url,
                         "image_url": img_url,
                         "price_usd": price_usd,
+                        "price_orig": price_raw,
+                        "currency": currency,
                         "size_mm": None,
                         "in_stock": True,
                         "source": "ebay",
@@ -93,12 +134,6 @@ class EbayScraper(BaseScraper):
                 time.sleep(self.delay_seconds)
 
             except Exception as e:
-                self.logger.error(f"eBay fetch error for '{query}': {e}")
+                self.logger.warning(f"eBay API error for '{query}': {e}")
 
         return results
-
-    def _parse_price(self, text: str) -> float | None:
-        import re
-        text = text.replace(",", "").replace("$", "").strip()
-        m = re.search(r"(\d+(?:\.\d{2})?)", text)
-        return float(m.group(1)) if m else None
