@@ -28,7 +28,7 @@ def generate_analytics():
 def _fetch_all_products(sb):
     r = sb.table("products").select(
         "id, title, url, source, score, first_seen, last_seen, is_excluded"
-    ).eq("is_excluded", False).order("last_seen", desc=True).limit(100).execute()
+    ).eq("is_excluded", False).order("score", desc=True).limit(200).execute()
     return r.data or []
 
 
@@ -115,12 +115,15 @@ def _render(products, recent_hist, all_hist):
                 pass
         l7 = min(r7) if r7 else cur
         h7 = max(r7) if r7 else cur
+        sc = p.get("score", 0)
+        sc_color = "#27ae60" if sc >= 70 else "#f39c12" if sc >= 40 else "#e74c3c"
         t = _esc(p["title"] or "")[:55]
         price_rows += (
             '<tr>'
             f'<td style="padding:8px;border-bottom:1px solid #eee;font-size:13px">'
             f'<a href="{_esc(p["url"])}" target="_blank" style="color:#0066cc;text-decoration:none">{t}</a>'
             f'<br><span style="font-size:11px;color:#aaa">{_esc(p["source"])}</span></td>'
+            f'<td style="padding:8px;border-bottom:1px solid #eee;text-align:center;font-weight:600;color:{sc_color}">{sc}</td>'
             f'<td style="padding:8px;border-bottom:1px solid #eee;text-align:right;font-weight:500">${cur:.2f}</td>'
             f'<td style="padding:8px;border-bottom:1px solid #eee;text-align:right;color:#888">${l7:.2f}</td>'
             f'<td style="padding:8px;border-bottom:1px solid #eee;text-align:right;color:#888">${h7:.2f}</td>'
@@ -150,23 +153,33 @@ def _render(products, recent_hist, all_hist):
             f'<div style="width:45px;text-align:right;font-size:12px;color:#888">{pct}%</div></div>'
         )
 
+    # Score distribution
+    strong = sum(1 for p in products if p.get("score", 0) >= 70)
+    partial = sum(1 for p in products if 40 <= p.get("score", 0) < 70)
+    weak = sum(1 for p in products if p.get("score", 0) < 40)
+    total_scored = len(products)
+
     # Source breakdown
     src = {}
     for p in products:
         s = p["source"]
         if s not in src:
-            src[s] = {"count": 0, "prices": []}
+            src[s] = {"count": 0, "prices": [], "scores": []}
         src[s]["count"] += 1
+        src[s]["scores"].append(p.get("score", 0))
         hist = all_hist.get(p["id"], [])
         if hist:
             src[s]["prices"].append(hist[0]["price_usd"])
     source_rows = ""
     for s, d in sorted(src.items(), key=lambda x: -x[1]["count"]):
         avg = sum(d["prices"]) / len(d["prices"]) if d["prices"] else 0
+        avg_score = round(sum(d["scores"]) / len(d["scores"])) if d["scores"] else 0
+        sc_color = "#27ae60" if avg_score >= 70 else "#f39c12" if avg_score >= 40 else "#e74c3c"
         source_rows += (
             f'<tr><td style="padding:8px;border-bottom:1px solid #eee;font-weight:500">{_esc(s)}</td>'
             f'<td style="padding:8px;border-bottom:1px solid #eee;text-align:center">{d["count"]}</td>'
-            f'<td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${avg:.2f}</td></tr>'
+            f'<td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${avg:.2f}</td>'
+            f'<td style="padding:8px;border-bottom:1px solid #eee;text-align:center;font-weight:600;color:{sc_color}">{avg_score}</td></tr>'
         )
 
     # Recent history
@@ -216,9 +229,25 @@ th{background:#fafafa;padding:8px;text-align:left;font-weight:500;font-size:11px
         f'<div class="stat"><div class="stat-val">{total_drops}</div><div class="stat-lbl">Price drops detected</div></div>'
         f'<div class="stat"><div class="stat-val">{sources_active}</div><div class="stat-lbl">Sources active</div></div>'
         '</div>'
+        '<div class="card"><h3>Match score distribution</h3>'
+        '<p style="font-size:12px;color:#888;margin-bottom:14px">How well do tracked products match the target criteria? Score 70+ = strong, 40–69 = partial, below 40 = weak.</p>'
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">'
+        f'<div style="background:#e8f5e9;border-radius:8px;padding:16px;text-align:center">'
+        f'<div style="font-size:28px;font-weight:600;color:#27ae60">{strong}</div>'
+        f'<div style="font-size:12px;color:#27ae60;margin-top:4px">Strong match (70+)</div>'
+        f'<div style="font-size:11px;color:#888;margin-top:2px">{round(strong/total_scored*100) if total_scored else 0}% of total</div></div>'
+        f'<div style="background:#fff8e1;border-radius:8px;padding:16px;text-align:center">'
+        f'<div style="font-size:28px;font-weight:600;color:#f39c12">{partial}</div>'
+        f'<div style="font-size:12px;color:#f39c12;margin-top:4px">Partial match (40–69)</div>'
+        f'<div style="font-size:11px;color:#888;margin-top:2px">{round(partial/total_scored*100) if total_scored else 0}% of total</div></div>'
+        f'<div style="background:#fef5f5;border-radius:8px;padding:16px;text-align:center">'
+        f'<div style="font-size:28px;font-weight:600;color:#e74c3c">{weak}</div>'
+        f'<div style="font-size:12px;color:#e74c3c;margin-top:4px">Weak match (below 40)</div>'
+        f'<div style="font-size:11px;color:#888;margin-top:2px">{round(weak/total_scored*100) if total_scored else 0}% of total</div></div>'
+        '</div></div>'
         '<div class="card"><h3>Price summary</h3>'
         '<table><thead><tr>'
-        '<th>Product</th><th style="text-align:right">Current</th><th style="text-align:right">7d low</th>'
+        '<th>Product</th><th style="text-align:center">Score</th><th style="text-align:right">Current</th><th style="text-align:right">7d low</th>'
         '<th style="text-align:right">7d high</th><th style="text-align:right">All-time low</th>'
         '<th style="text-align:center">Trend</th><th style="text-align:center">Points</th><th style="text-align:center">First seen</th>'
         f'</tr></thead><tbody>{price_rows}</tbody></table></div>'
@@ -226,7 +255,7 @@ th{background:#fafafa;padding:8px;text-align:left;font-weight:500;font-size:11px
         '<p style="font-size:12px;color:#888;margin-bottom:12px">Products with 3+ data points. Bar shows % of checks where item was in stock.</p>'
         f'{no_stock}</div>'
         '<div class="card"><h3>Source breakdown</h3>'
-        '<table><thead><tr><th>Source</th><th style="text-align:center">Products</th><th style="text-align:right">Avg price</th></tr></thead>'
+        '<table><thead><tr><th>Source</th><th style="text-align:center">Products</th><th style="text-align:right">Avg price</th><th style="text-align:center">Avg score</th></tr></thead>'
         f'<tbody>{source_rows}</tbody></table></div>'
         '<div class="card"><h3>Recent price history</h3>'
         '<p style="font-size:12px;color:#888;margin-bottom:10px">Last 50 price checks across all products.</p>'
