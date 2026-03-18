@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Tracker - Analytics</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f7f7f7;color:#1a1a1a}
+    .header{background:#fff;border-bottom:1px solid #e5e5e5;padding:0 24px;display:flex;align-items:center;gap:24px}
+    .header h1{font-size:18px;font-weight:600;padding:16px 0}
+    .header a{font-size:13px;color:#888;text-decoration:none;margin-left:auto}
+    .header a:hover{color:#1a1a1a}
+    .content{max-width:1060px;margin:0 auto;padding:28px 24px}
+    .card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:20px 24px;margin-bottom:16px}
+    .card h3{font-size:14px;font-weight:600;margin-bottom:14px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+    .stat{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:16px 20px}
+    .stat-val{font-size:28px;font-weight:600}
+    .stat-lbl{font-size:12px;color:#888;margin-top:4px}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th{background:#fafafa;padding:10px 8px;text-align:left;font-weight:500;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #eee;cursor:pointer;user-select:none}
+    th:hover{color:#1a1a1a}
+    tr:hover td{background:#fafafa}
+    td{padding:10px 8px;border-bottom:1px solid #eee}
+    .meta{color:#999;font-size:13px;margin-bottom:20px}
+    .score-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600}
+    .score-strong{background:#e8f5e9;color:#27ae60}
+    .score-partial{background:#fff8e1;color:#f39c12}
+    .score-weak{background:#fef5f5;color:#e74c3c}
+    .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#f0f0f0;color:#555}
+    .filter-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+    .filter-bar select,.filter-bar input{padding:7px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;font-family:inherit;background:#fafafa}
+    .filter-bar select:focus,.filter-bar input:focus{outline:none;border-color:#666;background:#fff}
+    .pagination{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:16px;font-size:13px}
+    .pagination button{padding:5px 12px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;font-family:inherit}
+    .pagination button:hover{background:#f0f0f0}
+    .pagination button.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+    .pagination button:disabled{opacity:.4;cursor:not-allowed}
+    .count-label{font-size:12px;color:#888;margin-bottom:10px}
+    .expand-btn{background:none;border:none;cursor:pointer;font-size:16px;color:#888;padding:0 4px}
+    .expand-btn:hover{color:#1a1a1a}
+    .history-row td{background:#fafafa;padding:0}
+    .history-table{width:100%;font-size:12px;border-collapse:collapse;margin:0}
+    .history-table td,.history-table th{padding:6px 10px;border-bottom:1px solid #eee;font-size:12px}
+    .history-table th{background:#f0f0f0;font-size:10px}
+    .trend-up{color:#e74c3c}
+    .trend-down{color:#27ae60}
+    .trend-stable{color:#888}
+    .source-bar-container{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+    .source-bar-label{width:140px;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .source-bar-track{flex:1;background:#f0f0f0;border-radius:4px;height:22px;overflow:hidden}
+    .source-bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;color:#fff;font-weight:500;min-width:30px}
+    .source-bar-stats{width:180px;font-size:12px;color:#888;text-align:right}
+    .loading{text-align:center;padding:40px;color:#999;font-size:14px}
+  </style>
+</head>
+<body>
+<div class="header">
+  <h1>Analytics</h1>
+  <a href="index.html">&larr; Back to dashboard</a>
+</div>
+<div class="content">
+  <p class="meta" id="load-status">Loading data from Supabase...</p>
+
+  <!-- SUMMARY STATS -->
+  <div class="stats" id="summary-stats">
+    <div class="stat"><div class="stat-val" id="stat-total">-</div><div class="stat-lbl">Products tracked</div></div>
+    <div class="stat"><div class="stat-val" id="stat-checks">-</div><div class="stat-lbl">Price checks run</div></div>
+    <div class="stat"><div class="stat-val" id="stat-sources">-</div><div class="stat-lbl">Sources active</div></div>
+    <div class="stat"><div class="stat-val" id="stat-avg">-</div><div class="stat-lbl">Avg price (visible)</div></div>
+  </div>
+
+  <!-- SCORE DISTRIBUTION -->
+  <div class="card">
+    <h3>Score distribution</h3>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="score-dist">
+      <div style="background:#e8f5e9;border-radius:8px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:600;color:#27ae60" id="dist-strong">-</div>
+        <div style="font-size:12px;color:#27ae60;margin-top:4px">Strong (70+)</div>
+        <div style="font-size:11px;color:#888;margin-top:2px" id="dist-strong-pct">-</div>
+      </div>
+      <div style="background:#fff8e1;border-radius:8px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:600;color:#f39c12" id="dist-partial">-</div>
+        <div style="font-size:12px;color:#f39c12;margin-top:4px">Partial (40-69)</div>
+        <div style="font-size:11px;color:#888;margin-top:2px" id="dist-partial-pct">-</div>
+      </div>
+      <div style="background:#fef5f5;border-radius:8px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:600;color:#e74c3c" id="dist-weak">-</div>
+        <div style="font-size:12px;color:#e74c3c;margin-top:4px">Weak (below 40)</div>
+        <div style="font-size:11px;color:#888;margin-top:2px" id="dist-weak-pct">-</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRODUCTS TABLE -->
+  <div class="card">
+    <h3>Products</h3>
+    <div class="filter-bar">
+      <select id="filter-score">
+        <option value="all">All scores</option>
+        <option value="strong">Strong (70+)</option>
+        <option value="partial">Partial (40-69)</option>
+        <option value="weak">Weak (below 40)</option>
+      </select>
+      <select id="filter-source">
+        <option value="all">All sources</option>
+      </select>
+      <input type="text" id="filter-search" placeholder="Search by title...">
+      <select id="filter-sort">
+        <option value="score-desc">Score (high first)</option>
+        <option value="price-desc">Price (high first)</option>
+        <option value="price-asc">Price (low first)</option>
+        <option value="newest">Newest first</option>
+      </select>
+    </div>
+    <div class="count-label" id="products-count"></div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:30px"></th>
+          <th>Product</th>
+          <th>Source</th>
+          <th style="text-align:center">Score</th>
+          <th style="text-align:right">Price</th>
+          <th style="text-align:center">7d trend</th>
+          <th style="text-align:center">Stock</th>
+          <th style="text-align:center">First seen</th>
+        </tr>
+      </thead>
+      <tbody id="products-tbody"></tbody>
+    </table>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <!-- SOURCE QUALITY -->
+  <div class="card">
+    <h3>Source quality</h3>
+    <div id="source-bars"></div>
+  </div>
+</div>
+
+<script>
+var SB_URL = localStorage.getItem("sb_url") || "";
+var SB_KEY = localStorage.getItem("sb_key") || "";
+
+if (!SB_URL || !SB_KEY) {
+  document.getElementById("load-status").textContent = "Error: Supabase config not found. Visit the dashboard first to initialize.";
+}
+
+var allProducts = [];
+var allHistory = {};
+var PAGE_SIZE = 25;
+var currentPage = 1;
+var expandedId = null;
+
+async function sbFetch(table, params) {
+  var url = SB_URL + "/rest/v1/" + table + "?select=*" + (params ? "&" + params : "");
+  var r = await fetch(url, {
+    headers: {"apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY}
+  });
+  return r.json();
+}
+
+async function sbFetchCount(table, params) {
+  var url = SB_URL + "/rest/v1/" + table + "?select=id" + (params ? "&" + params : "");
+  var r = await fetch(url, {
+    headers: {"apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Prefer": "count=exact"}
+  });
+  var count = r.headers.get("content-range");
+  return count ? parseInt(count.split("/")[1]) || 0 : 0;
+}
+
+function esc(s) {
+  var d = document.createElement("div");
+  d.textContent = s || "";
+  return d.innerHTML;
+}
+
+function relTime(iso) {
+  if (!iso) return "\u2014";
+  try {
+    var dt = new Date(iso);
+    var now = new Date();
+    var diffMs = now - dt;
+    var mins = Math.round(diffMs / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return mins + "m ago";
+    var hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + "h ago";
+    var days = Math.floor(hours / 24);
+    if (days === 1) return "yesterday";
+    return days + "d ago";
+  } catch (e) {
+    return "\u2014";
+  }
+}
+
+function scorePill(score) {
+  var cls = score >= 70 ? "score-strong" : score >= 40 ? "score-partial" : "score-weak";
+  return '<span class="score-pill ' + cls + '">' + score + '</span>';
+}
+
+function trend7d(productId) {
+  var hist = allHistory[productId];
+  if (!hist || hist.length < 2) return '<span class="trend-stable">\u2014</span>';
+  var now = Date.now();
+  var week = 7 * 86400000;
+  var recent = hist.filter(function(h) { return (now - new Date(h.scraped_at).getTime()) < week; });
+  if (recent.length < 2) return '<span class="trend-stable">\u2014 Stable</span>';
+  var newest = recent[0].price_usd;
+  var oldest = recent[recent.length - 1].price_usd;
+  if (newest < oldest) return '<span class="trend-down">\u25bc Down</span>';
+  if (newest > oldest) return '<span class="trend-up">\u25b2 Up</span>';
+  return '<span class="trend-stable">\u2014 Stable</span>';
+}
+
+function getLatestPrice(productId) {
+  var hist = allHistory[productId];
+  if (!hist || !hist.length) return null;
+  return hist[0].price_usd;
+}
+
+function getLatestStock(productId) {
+  var hist = allHistory[productId];
+  if (!hist || !hist.length) return null;
+  return hist[0].in_stock;
+}
+
+function getFiltered() {
+  var scoreFilter = document.getElementById("filter-score").value;
+  var sourceFilter = document.getElementById("filter-source").value;
+  var searchText = document.getElementById("filter-search").value.toLowerCase();
+  var sortBy = document.getElementById("filter-sort").value;
+
+  var filtered = allProducts.filter(function(p) {
+    var score = p.score || 0;
+    if (scoreFilter === "strong" && score < 70) return false;
+    if (scoreFilter === "partial" && (score < 40 || score >= 70)) return false;
+    if (scoreFilter === "weak" && score >= 40) return false;
+    if (sourceFilter !== "all" && p.source !== sourceFilter) return false;
+    if (searchText && (p.title || "").toLowerCase().indexOf(searchText) === -1) return false;
+    return true;
+  });
+
+  filtered.sort(function(a, b) {
+    if (sortBy === "score-desc") return (b.score || 0) - (a.score || 0);
+    if (sortBy === "price-desc") return (getLatestPrice(b.id) || 0) - (getLatestPrice(a.id) || 0);
+    if (sortBy === "price-asc") return (getLatestPrice(a.id) || 0) - (getLatestPrice(b.id) || 0);
+    if (sortBy === "newest") return new Date(b.first_seen || 0) - new Date(a.first_seen || 0);
+    return 0;
+  });
+
+  return filtered;
+}
+
+function renderTable() {
+  var filtered = getFiltered();
+  var totalFiltered = filtered.length;
+  var totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  var start = (currentPage - 1) * PAGE_SIZE;
+  var page = filtered.slice(start, start + PAGE_SIZE);
+
+  // Update avg price stat based on visible products
+  var prices = filtered.map(function(p) { return getLatestPrice(p.id); }).filter(function(v) { return v !== null; });
+  var avg = prices.length ? (prices.reduce(function(a, b) { return a + b; }, 0) / prices.length) : 0;
+  document.getElementById("stat-avg").textContent = "$" + avg.toFixed(2);
+
+  document.getElementById("products-count").textContent = totalFiltered + " of " + allProducts.length + " products";
+
+  var tbody = document.getElementById("products-tbody");
+  tbody.innerHTML = "";
+
+  page.forEach(function(p) {
+    var price = getLatestPrice(p.id);
+    var stock = getLatestStock(p.id);
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><button class="expand-btn" data-id="' + p.id + '">&#9654;</button></td>' +
+      '<td><a href="' + esc(p.url) + '" target="_blank" style="color:#0066cc;text-decoration:none;font-weight:500">' + esc((p.title || "").substring(0, 65)) + '</a></td>' +
+      '<td><span class="badge">' + esc(p.source) + '</span></td>' +
+      '<td style="text-align:center">' + scorePill(p.score || 0) + '</td>' +
+      '<td style="text-align:right;font-weight:500">' + (price !== null ? "$" + price.toFixed(2) : "\u2014") + '</td>' +
+      '<td style="text-align:center">' + trend7d(p.id) + '</td>' +
+      '<td style="text-align:center">' + (stock === true ? '<span style="color:#27ae60">In stock</span>' : stock === false ? '<span style="color:#e74c3c">Out</span>' : '\u2014') + '</td>' +
+      '<td style="text-align:center;font-size:12px;color:#aaa">' + relTime(p.first_seen) + '</td>';
+    tbody.appendChild(tr);
+
+    if (expandedId === p.id) {
+      appendHistoryRow(tbody, p.id);
+    }
+  });
+
+  // Expand buttons
+  tbody.querySelectorAll(".expand-btn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var id = btn.getAttribute("data-id");
+      if (expandedId === id) {
+        expandedId = null;
+      } else {
+        expandedId = id;
+      }
+      renderTable();
+    });
+  });
+
+  // Update expanded button icons
+  tbody.querySelectorAll(".expand-btn").forEach(function(btn) {
+    if (btn.getAttribute("data-id") === expandedId) {
+      btn.innerHTML = "&#9660;";
+    }
+  });
+
+  renderPagination(totalPages);
+}
+
+function appendHistoryRow(tbody, productId) {
+  var hist = allHistory[productId];
+  if (!hist || !hist.length) return;
+  var items = hist.slice(0, 20);
+  var tr = document.createElement("tr");
+  tr.className = "history-row";
+  var td = document.createElement("td");
+  td.colSpan = 8;
+  td.style.padding = "0 0 0 40px";
+  var html = '<table class="history-table"><thead><tr><th>Timestamp</th><th style="text-align:right">Price</th><th style="text-align:center">In stock</th></tr></thead><tbody>';
+  items.forEach(function(h) {
+    var stockLabel = h.in_stock ? '<span style="color:#27ae60">Yes</span>' : '<span style="color:#e74c3c">No</span>';
+    html += '<tr><td>' + relTime(h.scraped_at) + '</td><td style="text-align:right">$' + (h.price_usd || 0).toFixed(2) + '</td><td style="text-align:center">' + stockLabel + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  td.innerHTML = html;
+  tr.appendChild(td);
+  tbody.appendChild(tr);
+}
+
+function renderPagination(totalPages) {
+  var container = document.getElementById("pagination");
+  container.innerHTML = "";
+  if (totalPages <= 1) return;
+
+  var prev = document.createElement("button");
+  prev.textContent = "\u2190 Prev";
+  prev.disabled = currentPage <= 1;
+  prev.addEventListener("click", function() { currentPage--; renderTable(); });
+  container.appendChild(prev);
+
+  var startPage = Math.max(1, currentPage - 2);
+  var endPage = Math.min(totalPages, startPage + 4);
+  if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+  for (var i = startPage; i <= endPage; i++) {
+    var btn = document.createElement("button");
+    btn.textContent = i;
+    if (i === currentPage) btn.className = "active";
+    btn.setAttribute("data-page", i);
+    btn.addEventListener("click", function() {
+      currentPage = parseInt(this.getAttribute("data-page"));
+      renderTable();
+    });
+    container.appendChild(btn);
+  }
+
+  var next = document.createElement("button");
+  next.textContent = "Next \u2192";
+  next.disabled = currentPage >= totalPages;
+  next.addEventListener("click", function() { currentPage++; renderTable(); });
+  container.appendChild(next);
+}
+
+function renderSourceBars() {
+  var sources = {};
+  allProducts.forEach(function(p) {
+    if (!sources[p.source]) sources[p.source] = {count: 0, scores: [], prices: []};
+    sources[p.source].count++;
+    sources[p.source].scores.push(p.score || 0);
+    var price = getLatestPrice(p.id);
+    if (price !== null) sources[p.source].prices.push(price);
+  });
+
+  var entries = Object.keys(sources).map(function(s) {
+    var d = sources[s];
+    var avgScore = d.scores.length ? Math.round(d.scores.reduce(function(a, b) { return a + b; }, 0) / d.scores.length) : 0;
+    var avgPrice = d.prices.length ? (d.prices.reduce(function(a, b) { return a + b; }, 0) / d.prices.length) : 0;
+    return {name: s, count: d.count, avgScore: avgScore, avgPrice: avgPrice};
+  });
+  entries.sort(function(a, b) { return b.avgScore - a.avgScore; });
+
+  var maxScore = Math.max.apply(null, entries.map(function(e) { return e.avgScore; }).concat([1]));
+  var container = document.getElementById("source-bars");
+  container.innerHTML = "";
+
+  entries.forEach(function(e) {
+    var pct = Math.round((e.avgScore / 100) * 100);
+    var color = e.avgScore >= 70 ? "#27ae60" : e.avgScore >= 40 ? "#f39c12" : "#e74c3c";
+    container.innerHTML +=
+      '<div class="source-bar-container">' +
+      '<div class="source-bar-label">' + esc(e.name) + '</div>' +
+      '<div class="source-bar-track"><div class="source-bar-fill" style="width:' + Math.max(pct, 5) + '%;background:' + color + '">' + e.avgScore + '</div></div>' +
+      '<div class="source-bar-stats">' + e.count + ' products &middot; $' + e.avgPrice.toFixed(2) + ' avg</div>' +
+      '</div>';
+  });
+}
+
+function populateSourceFilter() {
+  var sources = {};
+  allProducts.forEach(function(p) { sources[p.source] = true; });
+  var sel = document.getElementById("filter-source");
+  Object.keys(sources).sort().forEach(function(s) {
+    var opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = s;
+    sel.appendChild(opt);
+  });
+}
+
+function updateSummary() {
+  document.getElementById("stat-total").textContent = allProducts.length;
+  var totalChecks = 0;
+  Object.keys(allHistory).forEach(function(id) { totalChecks += allHistory[id].length; });
+  document.getElementById("stat-checks").textContent = totalChecks;
+  var sources = {};
+  allProducts.forEach(function(p) { sources[p.source] = true; });
+  document.getElementById("stat-sources").textContent = Object.keys(sources).length;
+
+  var total = allProducts.length || 1;
+  var strong = allProducts.filter(function(p) { return (p.score || 0) >= 70; }).length;
+  var partial = allProducts.filter(function(p) { var s = p.score || 0; return s >= 40 && s < 70; }).length;
+  var weak = allProducts.filter(function(p) { return (p.score || 0) < 40; }).length;
+  document.getElementById("dist-strong").textContent = strong;
+  document.getElementById("dist-partial").textContent = partial;
+  document.getElementById("dist-weak").textContent = weak;
+  document.getElementById("dist-strong-pct").textContent = Math.round(strong / total * 100) + "% of total";
+  document.getElementById("dist-partial-pct").textContent = Math.round(partial / total * 100) + "% of total";
+  document.getElementById("dist-weak-pct").textContent = Math.round(weak / total * 100) + "% of total";
+}
+
+async function loadAll() {
+  if (!SB_URL || !SB_KEY) return;
+  try {
+    document.getElementById("load-status").textContent = "Loading products...";
+    allProducts = await sbFetch("products", "is_excluded=eq.false&order=score.desc&limit=500");
+    if (!Array.isArray(allProducts)) allProducts = [];
+
+    document.getElementById("load-status").textContent = "Loading price history...";
+    var history = await sbFetch("price_history", "order=scraped_at.desc&limit=5000");
+    if (!Array.isArray(history)) history = [];
+
+    allHistory = {};
+    history.forEach(function(h) {
+      var pid = h.product_id;
+      if (!allHistory[pid]) allHistory[pid] = [];
+      allHistory[pid].push(h);
+    });
+
+    document.getElementById("load-status").textContent = "Data loaded \u2014 " + allProducts.length + " products, " + history.length + " price records";
+
+    updateSummary();
+    populateSourceFilter();
+    renderTable();
+    renderSourceBars();
+  } catch (e) {
+    document.getElementById("load-status").textContent = "Error loading data: " + e.message;
+  }
+}
+
+// Wire up filters
+document.getElementById("filter-score").addEventListener("change", function() { currentPage = 1; renderTable(); });
+document.getElementById("filter-source").addEventListener("change", function() { currentPage = 1; renderTable(); });
+document.getElementById("filter-search").addEventListener("input", function() { currentPage = 1; renderTable(); });
+document.getElementById("filter-sort").addEventListener("change", function() { currentPage = 1; renderTable(); });
+
+loadAll();
+</script>
+</body>
+</html>
