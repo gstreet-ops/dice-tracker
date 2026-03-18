@@ -29,6 +29,7 @@ PHASES = [
             ("eBay official API", "active"),
             ("URL watcher \u2014 paste any product URL to track", "soon"),
             ("Header search indicator with pulsing dot", "soon"),
+            ("Product photos \u2014 show thumbnail images from listings", "soon"),
             ("Price history sparkline on each product", "soon"),
         ],
     },
