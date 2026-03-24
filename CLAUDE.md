@@ -4,6 +4,13 @@ Global price tracker for premium 50mm gold dice.
 Scrapes eBay, Google Shopping, AliExpress, and Chessex on a cron schedule.
 Stores results in Supabase. Sends Gmail alerts on matches. Dashboard on GitHub Pages.
 
+## Cross-Project Context
+Before starting work, read the workspace Project Registry for relationship context:
+`C:\Users\brian\projects\PROJECT_REGISTRY.md`
+This project is **standalone** — own Supabase project (Account 4). No shared infra with other projects.
+
+---
+
 ## Project Info
 - **Repo:** https://github.com/gstreet-ops/dice-tracker
 - **Local:** C:\Users\brian\projects\dice-tracker
