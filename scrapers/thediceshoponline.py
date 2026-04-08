@@ -1,6 +1,6 @@
 """
 thediceshoponline.py — Scraper for The Dice Shop Online 50mm dice.
-Target: https://www.thediceshoponng.com/dice/D6-dice/50mm-dice
+Target: https://www.thediceshoponline.com/dice/D6-dice/50mm-dice
 """
 import time
 import re
@@ -11,7 +11,7 @@ from .base import BaseScraper
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (GHTML, like Gecko) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/120.0.0.0 Safari/537.36"
     )
 }
@@ -126,5 +126,12 @@ class TheDiceShopScraper(BaseScraper):
         return results
 
     def _parse_price(self, text: str) -> float | None:
-        m = re.search(r"[\$\£]?\s*(\d+(?:\.\d{2})?)", text.replace(",", ""))
-        return float(m.group(1)) if m else None
+        GBP_TO_USD = 1.27  # same rate as ebay.py
+        m = re.search(r"([\$\£])?\s*(\d+(?:\.\d{2})?)", text.replace(",", ""))
+        if not m:
+            return None
+        price = float(m.group(2))
+        # Convert GBP to USD; assume GBP if £ or no currency symbol (UK store)
+        if m.group(1) != "$":
+            price = round(price * GBP_TO_USD, 2)
+        return price

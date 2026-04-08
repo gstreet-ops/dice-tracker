@@ -19,6 +19,7 @@ from dashboard.generate import generate_dashboard
 from dashboard.analytics_generate import generate_analytics
 from dashboard.roadmap_generate import generate_roadmap
 from scrapers.base import get_supabase
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger("run")
@@ -189,7 +190,7 @@ def _get_top_products(limit: int = 10) -> list[dict]:
 def _ping_keepalive():
     try:
         sb = get_supabase()
-        sb.table("keepalive").update({"pinged_at": "now()"}).eq("id", 1).execute()
+        sb.table("keepalive").update({"pinged_at": datetime.now(timezone.utc).isoformat()}).eq("id", 1).execute()
         logger.info("Keepalive pinged")
     except Exception as e:
         logger.warning(f"Keepalive ping failed: {e}")
